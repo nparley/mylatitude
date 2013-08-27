@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+	<body>
+	<h1> Locations </h1>
+	<p>
+    {% for location in locations -%}
+		Time Stamp: {{ location.timestampMs }}<br/>
+		latitudeE7: {{ location.latitudeE7 }} <br/>
+		longitudeE7: {{ location.longitudeE7 }} <br/>
+		accuracy: {{ location.accuracy }} <br/>
+		velocity: {{ location.velocity }} <br/>
+		heading: {{ location.heading }} <br/>
+		altitude: {{ location.altitude }} <br/>
+		verticalAccuracy: {{ location.verticalAccuracy }} <br/><br/>
+	{% endfor %}
+  	</p> 
+  	</body>
+</html>
+
