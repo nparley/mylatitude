@@ -4,12 +4,22 @@ import sys
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
+from apiclient.discovery import build
 
 import jinja2
 import webapp2
 import json
 import random
 import string
+
+from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
+from oauth2client.client import AccessTokenRefreshError
+
+decorator = OAuth2DecoratorFromClientSecrets(
+  os.path.join(os.path.dirname(__file__), 'client_secrets.json'),
+  'https://www.googleapis.com/auth/userinfo.profile')
+
+service = build("oauth2", "v2")
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -21,19 +31,19 @@ def randomKey(N=15):
 def noAccess(user,output,forwardURL='/'):
   template = JINJA_ENVIRONMENT.get_template('default.html')
   greeting = ('Sorry, %s you do not have access! (<a href="%s">sign out</a>)' %
-                (user.nickname(), users.create_logout_url(forwardURL)))
+                (user['name'], users.create_logout_url(forwardURL)))
   template_values = {'content':greeting}
   output.write(template.render(template_values))
 
-def signIn(user,output,forwardURL='/'):
-  template = JINJA_ENVIRONMENT.get_template('default.html')
-  greeting = ('<a href="%s">Please Sign in</a>.' % users.create_login_url(forwardURL))
-  template_values = {'content':greeting}
-  output.write(template.render(template_values))
+# def signIn(user,output,forwardURL='/'):
+#   template = JINJA_ENVIRONMENT.get_template('default.html')
+#   greeting = ('<a href="%s">Please Sign in</a>.' % users.create_login_url(forwardURL))
+#   template_values = {'content':greeting}
+#   output.write(template.render(template_values))
 
 def checkUser(user,output,allowAccess=False,forwardURL='/'):
   if user:
-    userCheck = Users.get_by_id(user.user_id())
+    userCheck = Users.get_by_id(user['id'])
     if userCheck:
       return True
     else:
@@ -43,12 +53,12 @@ def checkUser(user,output,allowAccess=False,forwardURL='/'):
       else:
         return True
   else:
-    signIn(user,output,forwardURL)
+    noAccess(user,output,forwardURL)
     return False  
   
 def checkOwnerUser(user,output,forwardURL='/'):
   if user:
-    userCheck = Users.get_by_id(user.user_id())
+    userCheck = Users.get_by_id(user['id'])
     if userCheck:
       if userCheck.owner == True:
         return True
@@ -59,7 +69,7 @@ def checkOwnerUser(user,output,forwardURL='/'):
       noAccess(user,output,forwardURL)
       return False
   else:
-    signIn(user,output,forwardURL)
+    noAccess(user,output,forwardURL)
     return False 
   
   
@@ -80,16 +90,30 @@ class Users(ndb.Model):
     userid = ndb.StringProperty()
     owner = ndb.BooleanProperty()
     name = ndb.StringProperty()
+    picture = ndb.StringProperty()
 
 class Keys(ndb.Model):
     keyid = ndb.StringProperty()  
 
 class FriendUrls(ndb.Model):
   keyid = ndb.StringProperty()
+
+class oauthTest(webapp2.RequestHandler):
+  @decorator.oauth_required
+  def get(self):
+    if decorator.has_credentials():
+      http = decorator.http()
+      me = service.userinfo().get().execute(http=http)
+      #info = {"name":me['displayName'],"id":me['userID']}
+      self.response.write(me)
+
+      
   
 class MainPage(webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self):
-    user = users.get_current_user()
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
     if checkUser(user,self.response):
       try:
         owner = Users.query(Users.owner==True).fetch(1)[0]
@@ -118,30 +142,29 @@ class MainPage(webapp2.RequestHandler):
         locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStamp':0}) 
         
       template = JINJA_ENVIRONMENT.get_template('index.html')
-      template_values = {'locations': locationArray, 'userName': owner.name, 'key':str(gKey.keyid),'owner':Users.get_by_id(user.user_id()).owner}
+      template_values = {'locations': locationArray, 'userName': owner.name, 'key':str(gKey.keyid),'owner':Users.get_by_id(user['id']).owner, 'ownerPic':owner.picture}
       self.response.write(template.render(template_values))
 
 
 class setupOwner(webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self):
+    http = decorator.http()
     numberOfUsers = Users.query().count()
     if numberOfUsers > 0:
       template_values = {'content':'Already setup'}
       template = JINJA_ENVIRONMENT.get_template('default.html')
       self.response.write(template.render(template_values))
       return
-    user = users.get_current_user()
+    user = service.userinfo().get().execute(http=http)
     if user:
+      template_values = {'userName':user['given_name']}
       template = JINJA_ENVIRONMENT.get_template('userSetup.html')
-      self.response.write(template.render())
+      self.response.write(template.render(template_values))
     else:
-      greeting = ('<a href="%s">Please Sign in</a>.' %
-                        users.create_login_url('/setup'))
-      template_values = {'content':greeting}
-      template = JINJA_ENVIRONMENT.get_template('default.html')
-      self.response.write(template.render(template_values))  
+      noAccess(user,self.response,"/setup")
       
-      
+  @decorator.oauth_required    
   def post(self):
     numberOfUsers = Users.query().count()
     if numberOfUsers > 0:
@@ -149,7 +172,8 @@ class setupOwner(webapp2.RequestHandler):
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
       return
-    user = users.get_current_user()
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
     if user:
       try:
         mapKey = self.request.POST['mapKey']
@@ -160,10 +184,14 @@ class setupOwner(webapp2.RequestHandler):
         template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         self.response.write(template.render(template_values))
         return
-      adminUser = Users(id=user.user_id())
-      adminUser.userid = user.user_id()
+      adminUser = Users(id=user['id'])
+      adminUser.userid = user['id']
       adminUser.owner = True
       adminUser.name = userName
+      try:
+        adminUser.picture = user['picture']
+      except KeyError:
+        adminUser.picture = '/images/blank.jpg'
       adminUser.put()
       gmaps = Maps()
       gmaps.keyid = mapKey
@@ -178,15 +206,13 @@ class setupOwner(webapp2.RequestHandler):
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
     else:
-      greeting = ('<a href="%s">Please Sign in</a>.' %
-                        users.create_login_url('/setup'))
-      template_values = {'content':greeting}
-      template = JINJA_ENVIRONMENT.get_template('default.html')
-      self.response.write(template.render(template_values))
+      noAccess(user,self.response,"/setup")
       
 class newFriendUrl(webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self):
-    user = users.get_current_user()
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
     if checkOwnerUser(user,self.response,forwardURL='/newfriend'):
       key = randomKey(15)
       newURL = FriendUrls(id=key)
@@ -194,33 +220,41 @@ class newFriendUrl(webapp2.RequestHandler):
       newURL.put()
       url = "%s/addviewer/%s" % (self.request.host_url,key)
       greeting = 'Send your friend this url: %s' % url
-      template_values = {'content':greeting,'userName': Users.get_by_id(user.user_id()).name}
+      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
    
 class viewURLs(webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self):
-    user = users.get_current_user()
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
     if checkOwnerUser(user,self.response,forwardURL='/viewurls'):
       currentURLs = FriendUrls.query().fetch(10)
       greeting = "These URLs are active to enable friends to view your location: <br/>"
       for url in currentURLs:
         greeting += "%s/addviewer/%s <br/>" % (self.request.host_url,url.keyid)
-      template_values = {'content':greeting,'userName': Users.get_by_id(user.user_id()).name}
+      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
 
 class addViewer(webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self,key):
     dbKey = FriendUrls.get_by_id(key)
     if dbKey:
-      user = users.get_current_user()
+      http = decorator.http()
+      user = service.userinfo().get().execute(http=http)
       if checkUser(user,self.response,allowAccess=True,forwardURL=self.request.url):
-        if Users.get_by_id(user.user_id()) == None:
-          newUser = Users(id=user.user_id())
-          newUser.userid = user.user_id()
+        if Users.get_by_id(user['id']) == None:
+          newUser = Users(id=user['id'])
+          newUser.userid = user['id']
           newUser.owner = False
-          newUser.name = user.nickname()
+          newUser.name = user['given_name']
+          try:
+            newUser.picture = user['picture']
+          except KeyError:
+            newUser.picture = '/images/blank.jpg'
           newUser.put()
           dbKey.key.delete()
         return self.redirect('/')
@@ -228,13 +262,15 @@ class addViewer(webapp2.RequestHandler):
       self.abort(403)
       
 class viewKey (webapp2.RequestHandler):
+  @decorator.oauth_required
   def get(self):
-    user = users.get_current_user()
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
     if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
       currentKeys = Keys.query().fetch(1)
       key = currentKeys[0].keyid
       greeting = 'Your key is: %s' % key
-      template_values = {'content':greeting,'userName': Users.get_by_id(user.user_id()).name} 
+      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name} 
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
     
@@ -314,6 +350,8 @@ class insertBack(webapp2.RequestHandler):
     self.response.out.write(json.dumps(response))
 
 application = webapp2.WSGIApplication([('/', MainPage),('/insert',insertLocation),('/backitude',insertBack),('/setup',setupOwner),
-                                       ('/viewkey',viewKey),('/newfriend',newFriendUrl),('/viewurls',viewURLs),webapp2.Route('/addviewer/<key>',handler=addViewer,name='addviewer')], debug=True)
+                                       ('/viewkey',viewKey),('/newfriend',newFriendUrl),('/viewurls',viewURLs),('/test',oauthTest),
+                                       (decorator.callback_path, decorator.callback_handler()),
+                                       webapp2.Route('/addviewer/<key>',handler=addViewer,name='addviewer')], debug=True)
 
      

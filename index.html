@@ -56,8 +56,8 @@
 		    	if (diff > 60) { diff /= 60; diffText = "hours"}
 		    	diff = Math.round(diff);
 		    	infoWindow.setPosition(center);
-		    	updateString = "<strong> {{userName}}'s location </strong><br/>";
-		    	updateString += "<a href='http://maps.google.com/maps?saddr=&daddr="+location.latitude+","+location.longitude+"'> Directions Link</a><br/>" ;
+		    	updateString = "<img src='{{ownerPic}}' height='50' width='50' style='float:right'> <strong> {{userName}}'s location </strong><br/>";
+		    	updateString += "<a href='http://maps.google.com/maps?saddr=&daddr="+location.latitude+","+location.longitude+"'> Directions Link</a><br/><br/>" ;
 		    	updateString += "Last updated on: " + d.toDateString() + "<br/>";
 		    	updateString += "at: " + d.toTimeString() + "<br/>";
 		    	updateString += diff + " " + diffText + " ago";
@@ -68,13 +68,15 @@
 		    	google.maps.event.addListener(locationCircle, 'click', function() {
 			    	infoWindow.open(map);
 		    	});
+		    			    	
 		    }
   		}
   		updateLocation(locations[0]);  
+  		google.maps.event.trigger(locationCircle, 'click');
   	}
-
+	
 	google.maps.event.addDomListener(window, 'load', initialize);
-
+	
 	</script>
   </head>
   <body>
