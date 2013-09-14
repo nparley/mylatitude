@@ -59,10 +59,10 @@
 		    	diff = Math.round(diff);
 		    	infoWindow.setPosition(center);
 		    	updateString = "<img src='{{ownerPic}}' height='50' width='50' style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> <strong> {{userName}}'s location </strong><br/>";
-		    	updateString += "<a href='http://maps.google.com/maps?saddr=&daddr="+location.latitude+","+location.longitude+"'> Directions Link</a><br/><br/>" ;
-		    	updateString += "Last updated on: " + d.toDateString() + "<br/>";
+		    	updateString += "<a href='http://maps.google.com/maps?saddr=&daddr="+location.latitude+","+location.longitude+"'> Directions Link</a><br/>" ;
+		    	updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
 		    	updateString += "at: " + d.toTimeString() + "<br/>";
-		    	updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:20%\">&nbsp;</span> ";
+		    	updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";
 		    	
 		    	var div = document.createElement('div'); 
 				div.innerHTML = updateString; 
