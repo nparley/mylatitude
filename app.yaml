@@ -9,13 +9,16 @@ handlers:
   static_dir: stylesheets
 - url: /images
   static_dir: images
+- url: /_ah/spi/.*
+  script: backend.application
 - url: /.*
   script: latMain.application
   secure: always 
-
   
 libraries:
 - name: webapp2
   version: 2.5.2
 - name: jinja2
   version: 2.6
+- name: pycrypto
+  version: "2.6"  
