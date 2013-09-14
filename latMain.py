@@ -1,6 +1,7 @@
 import os
 import urllib
 import sys
+import datetime
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
@@ -9,8 +10,7 @@ from apiclient.discovery import build
 import jinja2
 import webapp2
 import json
-import random
-import string
+import base64
 
 from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
 from oauth2client.client import AccessTokenRefreshError
@@ -26,7 +26,7 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'])
 
 def randomKey(N=15):
-  return ''.join(random.choice(string.ascii_uppercase + string.digits + string.ascii_lowercase) for x in range(N))
+  return base64.urlsafe_b64encode(os.urandom(N))
 
 def noAccess(user,output,forwardURL='/'):
   template = JINJA_ENVIRONMENT.get_template('default.html')
@@ -281,9 +281,9 @@ class insertLocation(webapp2.RequestHandler):
     try:
       key = self.request.GET['key']
     except KeyError:
-      self.abort(403)
+      self.abort(401)
     if not Keys.get_by_id(key):
-      self.abort(403)
+      self.abort(401)
     postBody = json.loads(self.request.body)   
     newLocation = Location.get_by_id(postBody['timestampMs'])
     if newLocation:
@@ -312,20 +312,46 @@ class insertLocation(webapp2.RequestHandler):
 class insertBack(webapp2.RequestHandler):
   def post(self):
     try:
+      
       key = self.request.POST['key']
       if not Keys.get_by_id(key):
-        self.abort(403)
+        self.abort(401)
       latitude = int(float(self.request.POST['latitude']) * 1E7)
       longitude = int(float(self.request.POST['longitude']) * 1E7)
       accuracy = int(float(self.request.POST['accuracy']))
-      speed = int(float(self.request.POST['speed']))
       altitude = int(float(self.request.POST['altitude']))
-      timestamp = int(self.request.POST['timestamp'])
-      timezone = self.request.POST['timezone']
+          
+      # Backitude has two timestamps due to the fact it can repost old
+      # locations. 
+      # utc_timestamp = time the location was created by the gps or wifi
+      # req_timestamp = time a request was made for the location
+      # If you setup backitude to post old locations if the accuracy is better
+      # and you have not moved then you might decide that you want to record
+      # req_timestamp to show that your location is updating. 
+      timestamp = int(self.request.POST['utc_timestamp'])
+      #     timestamp = int(self.request.POST['req_timestamp'])
+      
+      # You can decide to try and record the heading if you would like
+      speed = int(float(self.request.POST['speed']))
+  #     direction = int(float(self.request.POST['direction']))
+      
+      # Check to see if the timestamp is in seconds or milli seconds
+      # If the timestamp is in seconds this will pass and we can then
+      # convert it to millisecodns. If not the test will fail and everything
+      # is ok
+      try:
+        timestampDate =  datetime.datetime.utcfromtimestamp(timestamp)
+        timestamp *= 1000
+      except:
+        pass
+      
     except KeyError:
       self.response.out.write("Unexpected error")
       self.abort(400)
-      
+    
+    # Only add the location to the database if the timestamp is unique
+    # but send a 200 code so backitude doesn't store the location and 
+    # keep trying  
     newLocation = Location.get_by_id(id=str(timestamp))
     if newLocation:
       self.response.out.write("Time stamp error")
@@ -354,4 +380,3 @@ application = webapp2.WSGIApplication([('/', MainPage),('/insert',insertLocation
                                        (decorator.callback_path, decorator.callback_handler()),
                                        webapp2.Route('/addviewer/<key>',handler=addViewer,name='addviewer')], debug=True)
 
-     
