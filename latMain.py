@@ -72,6 +72,16 @@ def checkOwnerUser(user,output,forwardURL='/'):
     noAccess(user,output,forwardURL)
     return False 
   
+def json_error(response, code, message):
+  response.headers.add_header('Content-Type', 'application/json')
+  response.set_status(code)
+  result = {
+      'status': 'error',
+      'status_code': code,
+      'error_message': message,
+    }
+  response.write(json.dumps(result))
+
   
 class Location(ndb.Model):
     timestampMs = ndb.IntegerProperty()
@@ -273,6 +283,8 @@ class viewKey (webapp2.RequestHandler):
       template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name} 
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
+    else:
+      self.abort(403)
     
         
 class insertLocation(webapp2.RequestHandler): 
@@ -281,14 +293,16 @@ class insertLocation(webapp2.RequestHandler):
     try:
       key = self.request.GET['key']
     except KeyError:
-      self.abort(401)
+      json_error(self.response,401,"No Access")
+      return
     if not Keys.get_by_id(key):
-      self.abort(401)
+      json_error(self.response,401,"No Access")
+      return
     postBody = json.loads(self.request.body)   
     newLocation = Location.get_by_id(postBody['timestampMs'])
     if newLocation:
-      self.response.out.write("Time stamp error")
-      self.abort(200)
+      json_error(self.response,200,"Time stamp error")
+      return
     try:
       newLocation = Location(id=postBody['timestampMs'])
       newLocation.timestampMs = int(postBody['timestampMs'])
@@ -301,9 +315,9 @@ class insertLocation(webapp2.RequestHandler):
       newLocation.verticalAccuracy = int(postBody['verticalAccuracy'])
       newLocation.put()
     except:
-      self.response.out.write("Unexpected error")
-      self.abort(400)
-      
+      json_error(self.response,400,"Unexpected error")
+      return
+                
     response = {'data': newLocation.to_dict()}
     self.response.set_status(200)
     self.response.out.write(json.dumps(response))
@@ -312,10 +326,10 @@ class insertLocation(webapp2.RequestHandler):
 class insertBack(webapp2.RequestHandler):
   def post(self):
     try:
-      
       key = self.request.POST['key']
       if not Keys.get_by_id(key):
-        self.abort(401)
+        json_error(self.response,401,"No Access")
+        return
       latitude = int(float(self.request.POST['latitude']) * 1E7)
       longitude = int(float(self.request.POST['longitude']) * 1E7)
       accuracy = int(float(self.request.POST['accuracy']))
@@ -340,22 +354,22 @@ class insertBack(webapp2.RequestHandler):
       # convert it to millisecodns. If not the test will fail and everything
       # is ok
       try:
-        timestampDate =  datetime.datetime.utcfromtimestamp(timestamp)
+        timestampDate = datetime.datetime.utcfromtimestamp(timestamp)
         timestamp *= 1000
       except:
         pass
       
     except KeyError:
-      self.response.out.write("Unexpected error")
-      self.abort(400)
+      json_error(self.response,400,"Missing values")
+      return
     
     # Only add the location to the database if the timestamp is unique
     # but send a 200 code so backitude doesn't store the location and 
     # keep trying  
     newLocation = Location.get_by_id(id=str(timestamp))
     if newLocation:
-      self.response.out.write("Time stamp error")
-      self.response.set_status(200)
+      json_error(self.response,200,"Time stamp error")
+      return
     try:
       newLocation = Location(id=str(timestamp))
       newLocation.timestampMs = timestamp
@@ -368,8 +382,8 @@ class insertBack(webapp2.RequestHandler):
       newLocation.verticalAccuracy = 0
       newLocation.put()
     except:
-      self.response.out.write("Unexpected error")
-      self.abort(400)
+      json_error(self.response,400,"DB insert error")
+      return
       
     response = {'data': newLocation.to_dict()}
     self.response.set_status(200)
