@@ -3,6 +3,9 @@ import urllib
 import sys
 import datetime
 
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
+
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from apiclient.discovery import build
@@ -360,6 +363,8 @@ class insertBack(webapp2.RequestHandler):
         pass
       
     except KeyError:
+      logging.debug('Missing values')
+      logging.debug(self.request)
       json_error(self.response,400,"Missing values")
       return
     
@@ -382,6 +387,8 @@ class insertBack(webapp2.RequestHandler):
       newLocation.verticalAccuracy = 0
       newLocation.put()
     except:
+      logging.debug('DB insert error')
+      logging.debug(self.request)
       json_error(self.response,400,"DB insert error")
       return
       
