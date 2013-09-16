@@ -336,8 +336,10 @@ class insertBack(webapp2.RequestHandler):
       latitude = int(float(self.request.POST['latitude']) * 1E7)
       longitude = int(float(self.request.POST['longitude']) * 1E7)
       accuracy = int(float(self.request.POST['accuracy']))
-      altitude = int(float(self.request.POST['altitude']))
-          
+      try:
+        altitude = int(float(self.request.POST['altitude']))
+      except:
+        altitude = 0    
       # Backitude has two timestamps due to the fact it can repost old
       # locations. 
       # utc_timestamp = time the location was created by the gps or wifi
@@ -349,7 +351,10 @@ class insertBack(webapp2.RequestHandler):
       #     timestamp = int(self.request.POST['req_timestamp'])
       
       # You can decide to try and record the heading if you would like
-      speed = int(float(self.request.POST['speed']))
+      try:
+        speed = int(float(self.request.POST['speed']))
+      except:
+        speed = 0
   #     direction = int(float(self.request.POST['direction']))
       
       # Check to see if the timestamp is in seconds or milli seconds
@@ -362,10 +367,10 @@ class insertBack(webapp2.RequestHandler):
       except:
         pass
       
-    except KeyError:
-      logging.debug('Missing values')
+    except KeyError, e:
+      logging.debug('Missing values %s' % str(e) )
       logging.debug(self.request)
-      json_error(self.response,400,"Missing values")
+      json_error(self.response,400,"Missing values %s" % str(e))
       return
     
     # Only add the location to the database if the timestamp is unique
@@ -389,7 +394,7 @@ class insertBack(webapp2.RequestHandler):
     except:
       logging.debug('DB insert error')
       logging.debug(self.request)
-      json_error(self.response,400,"DB insert error")
+      json_error(self.response,400,"DB insert error" )
       return
       
     response = {'data': newLocation.to_dict()}
