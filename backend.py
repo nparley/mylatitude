@@ -6,11 +6,17 @@ import os
 import sys
 import auth_util
 
+import logging
+logging.getLogger().setLevel(logging.DEBUG)
+
 ENDPOINTS_PROJECT_DIR = os.path.join(os.path.dirname(__file__),
                                      'endpoints-proto-datastore')
 sys.path.append(ENDPOINTS_PROJECT_DIR)
 
 from endpoints_proto_datastore.ndb import EndpointsModel
+import oauth2client.clientsecrets
+clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
+ALLOWED_CLIENT_IDS = [clientObj[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
 
 def checkUser(userID):
   if userID:
@@ -51,7 +57,7 @@ class Location(EndpointsModel):
     altitude = ndb.IntegerProperty()
     verticalAccuracy = ndb.IntegerProperty()
 
-@endpoints.api(name='mylatitude', version='v1', description='Rest API to the location data')
+@endpoints.api(name='mylatitude', version='v1', description='Rest API to the location data',allowed_client_ids=ALLOWED_CLIENT_IDS)
 class myLatAPI(remote.Service):
   @Location.query_method(user_required=True,
                         path='lastLocation', name='location.last',limit_default=1,limit_max=1)
