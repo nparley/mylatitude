@@ -20,7 +20,7 @@ from oauth2client.client import AccessTokenRefreshError
 
 decorator = OAuth2DecoratorFromClientSecrets(
   os.path.join(os.path.dirname(__file__), 'client_secrets.json'),
-  'https://www.googleapis.com/auth/userinfo.profile')
+  ['https://www.googleapis.com/auth/userinfo.profile','https://www.googleapis.com/auth/userinfo.email'])
 
 service = build("oauth2", "v2")
 
