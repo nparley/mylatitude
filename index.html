@@ -65,6 +65,7 @@
 		    	updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";
 		    	
 		    	var div = document.createElement('div'); 
+		    	div.className = "infoWin";
 				div.innerHTML = updateString; 
 				
 		    	infoWindow.setContent(div);
