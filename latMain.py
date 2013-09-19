@@ -17,6 +17,7 @@ import base64
 
 from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
 from oauth2client.client import AccessTokenRefreshError
+import oauth2client.clientsecrets
 
 decorator = OAuth2DecoratorFromClientSecrets(
   os.path.join(os.path.dirname(__file__), 'client_secrets.json'),
@@ -153,9 +154,11 @@ class MainPage(webapp2.RequestHandler):
       
       if len(locationArray) == 0: # Default to Edinburgh Castle
         locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStamp':0}) 
-        
+      
+      clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
+      apiRoot = "%s/_ah/api" % self.request.host_url  
       template = JINJA_ENVIRONMENT.get_template('index.html')
-      template_values = {'locations': locationArray, 'userName': owner.name, 'key':str(gKey.keyid),'owner':Users.get_by_id(user['id']).owner, 'ownerPic':owner.picture}
+      template_values = {'locations': locationArray, 'userName': owner.name, 'key':str(gKey.keyid),'owner':Users.get_by_id(user['id']).owner, 'ownerPic':owner.picture, 'apiRoot':apiRoot,'clientID':clientObj[1]['client_id']}
       self.response.write(template.render(template_values))
 
 
