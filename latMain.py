@@ -446,7 +446,7 @@ class insertBack(webapp2.RequestHandler):
         altitude = int(float(self.request.POST['altitude']))
       except (KeyError,ValueError):
         altitude = 0    
-      # Backitude has two timestamps due to the fact it can repost old
+      # Backitude has two timestamps due to the fact it can re-post old
       # locations. 
       # utc_timestamp = time the location was created by the gps or wifi
       # req_timestamp = time a request was made for the location
