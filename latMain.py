@@ -355,6 +355,21 @@ class addViewer(webapp2.RequestHandler):
         return self.redirect('/')
     else:
       self.abort(403)
+
+class viewAdmin (webapp2.RequestHandler):
+  """
+  View the admin settings page for the app
+  """
+  @decorator.oauth_required
+  def get(self):
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
+      template_values = {'userName': Users.get_by_id(user['id']).name} 
+      template = JINJA_ENVIRONMENT.get_template('admin.html')
+      self.response.write(template.render(template_values))
+    else:
+      self.abort(403)
       
 class viewKey (webapp2.RequestHandler):
   """
