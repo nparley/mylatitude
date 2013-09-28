@@ -171,17 +171,15 @@ class FriendUrls(ndb.Model):
   """
   keyid = ndb.StringProperty()
 
-class oauthTest(webapp2.RequestHandler):
-  @decorator.oauth_required
-  def get(self):
-    if decorator.has_credentials():
-      http = decorator.http()
-      me = service.userinfo().get().execute(http=http)
-      #info = {"name":me['displayName'],"id":me['userID']}
-      self.response.write(me)
+#class oauthTest(webapp2.RequestHandler):
+#  @decorator.oauth_required
+#  def get(self):
+#    if decorator.has_credentials():
+#      http = decorator.http()
+#      me = service.userinfo().get().execute(http=http)
+#      #info = {"name":me['displayName'],"id":me['userID']}
+#      self.response.write(me)
 
-      
-  
 class MainPage(webapp2.RequestHandler):
   """
   Generates the main map page
@@ -510,7 +508,7 @@ class insertBack(webapp2.RequestHandler):
     self.response.out.write(json.dumps(response))
 
 application = webapp2.WSGIApplication([('/', MainPage),('/insert',insertLocation),('/backitude',insertBack),('/setup',setupOwner),
-                                       ('/viewkey',viewKey),('/newfriend',newFriendUrl),('/viewurls',viewURLs),('/test',oauthTest),
-                                       (decorator.callback_path, decorator.callback_handler()),
+                                       ('/viewkey',viewKey),('/newfriend',newFriendUrl),('/viewurls',viewURLs),#('/test',oauthTest),
+                                       ('/admin',viewAdmin),('/newkey',newKey),(decorator.callback_path, decorator.callback_handler()),
                                        webapp2.Route('/addviewer/<key>',handler=addViewer,name='addviewer')], debug=True)
 
