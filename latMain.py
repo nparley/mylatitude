@@ -99,7 +99,7 @@ def checkOwnerUser(user,output,forwardURL='/'):
   if user:
     userCheck = Users.get_by_id(user['id'])
     if userCheck:
-      if userCheck.owner == True:
+      if userCheck.owner:
         return True
       else:
         noAccess(user,output,forwardURL)
@@ -191,6 +191,7 @@ class MainPage(webapp2.RequestHandler):
     http = decorator.http()
     user = service.userinfo().get().execute(http=http)
     if checkUser(user,self.response):
+      #noinspection PyBroadException
       try:
         owner = Users.query(Users.owner==True).fetch(1)[0]
       except IndexError:
@@ -205,7 +206,7 @@ class MainPage(webapp2.RequestHandler):
       latestUpdate = None
       for location in locations:
         timeStamp = location.timestampMs
-        if latestUpdate == None:
+        if latestUpdate is None:
           latestUpdate = timeStamp
         if timeStamp - latestUpdate > 900000: # Only send other points within 15minutes of latest update
           break
@@ -342,7 +343,7 @@ class addViewer(webapp2.RequestHandler):
       http = decorator.http()
       user = service.userinfo().get().execute(http=http)
       if checkUser(user,self.response,allowAccess=True,forwardURL=self.request.url):
-        if Users.get_by_id(user['id']) == None:
+        if Users.get_by_id(user['id']) is None:
           newUser = Users(id=user['id'])
           newUser.userid = user['id']
           newUser.owner = False
@@ -467,6 +468,7 @@ class insertBack(webapp2.RequestHandler):
       # convert it to millisecodns. If not the test will fail and everything
       # is ok
       try:
+        #noinspection PyUnusedLocal
         timestampDate = datetime.datetime.utcfromtimestamp(timestamp)
         timestamp *= 1000
       except ValueError:
@@ -485,6 +487,7 @@ class insertBack(webapp2.RequestHandler):
     if newLocation:
       json_error(self.response,200,"Time stamp error")
       return
+    #noinspection PyBroadException
     try:
       newLocation = Location(id=str(timestamp))
       newLocation.timestampMs = timestamp
