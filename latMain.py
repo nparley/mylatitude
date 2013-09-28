@@ -346,7 +346,7 @@ class addViewer(webapp2.RequestHandler):
           newUser.userid = user['id']
           newUser.owner = False
           newUser.name = user['given_name']
-          try:
+          try: # Not all users have pictures so sent the picture to blank if it is missing
             newUser.picture = user['picture']
           except KeyError:
             newUser.picture = '/images/blank.jpg'
