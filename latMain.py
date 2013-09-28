@@ -30,9 +30,24 @@ JINJA_ENVIRONMENT = jinja2.Environment(
     extensions=['jinja2.ext.autoescape'])
 
 def randomKey(N=15):
+  """
+  Generate a random key
+  @rtype : str
+  @param N: int, length of string
+  """
   return base64.urlsafe_b64encode(os.urandom(N))
 
 def noAccess(user,output,forwardURL='/'):
+  """
+  Display no access HTML message
+
+  Creates the no access HTML message to the user and enables them to log out in case
+  they have access under a different username.
+  @param user: dict of user info
+  @param output: webapp2 response object
+  @param forwardURL: url to send user to after logout
+  @return: None
+  """
   template = JINJA_ENVIRONMENT.get_template('default.html')
   greeting = ('Sorry, %s you do not have access! (<a href="%s">sign out</a>)' %
                 (user['name'], users.create_logout_url(forwardURL)))
@@ -46,6 +61,17 @@ def noAccess(user,output,forwardURL='/'):
 #   output.write(template.render(template_values))
 
 def checkUser(user,output,allowAccess=False,forwardURL='/'):
+  """
+  Check if the user can view
+
+  Checks the google profile id is in the database of allowed users. Can be used to check that the user dict is set
+  i.e. by setting allowAcess == true this function will only fail when user is None
+  @param user: dict from user info
+  @param output: webapp2 response object
+  @param allowAccess: True to allow users not in the database (i.e. for adding users)
+  @param forwardURL: URL to forward user to if sign out needs to be generated
+  @return: True for allow, False for no access
+  """
   if user:
     userCheck = Users.get_by_id(user['id'])
     if userCheck:
@@ -61,6 +87,15 @@ def checkUser(user,output,allowAccess=False,forwardURL='/'):
     return False  
   
 def checkOwnerUser(user,output,forwardURL='/'):
+  """
+  Check if the user is the owner
+
+  Checks to see if the users google profile id is in the allowed user database with owner set to True.
+  @param user: dict from user info
+  @param output: webapp2 response object
+  @param forwardURL: URL to forward user to if sign out needs to be generated
+  @return: True for owner access, False for no access
+  """
   if user:
     userCheck = Users.get_by_id(user['id'])
     if userCheck:
@@ -77,6 +112,15 @@ def checkOwnerUser(user,output,forwardURL='/'):
     return False 
   
 def json_error(response, code, message):
+  """
+  Create a JSON error message
+
+  Generate a error message in JSON format for the API parts of the app.
+  @param response: webapp2 response object
+  @param code: int HTTP status code
+  @param message: String error message
+  @return: None
+  """
   response.headers.add_header('Content-Type', 'application/json')
   response.set_status(code)
   result = {
@@ -88,28 +132,43 @@ def json_error(response, code, message):
 
   
 class Location(ndb.Model):
-    timestampMs = ndb.IntegerProperty()
-    latitudeE7 = ndb.IntegerProperty()
-    longitudeE7 = ndb.IntegerProperty()
-    accuracy = ndb.IntegerProperty()
-    velocity = ndb.IntegerProperty()
-    heading = ndb.IntegerProperty()
-    altitude = ndb.IntegerProperty()
-    verticalAccuracy = ndb.IntegerProperty()
+  """
+  Database Location Class: for storing location data
+  """
+  timestampMs = ndb.IntegerProperty()
+  latitudeE7 = ndb.IntegerProperty()
+  longitudeE7 = ndb.IntegerProperty()
+  accuracy = ndb.IntegerProperty()
+  velocity = ndb.IntegerProperty()
+  heading = ndb.IntegerProperty()
+  altitude = ndb.IntegerProperty()
+  verticalAccuracy = ndb.IntegerProperty()
 
 class Maps(ndb.Model):
-    keyid = ndb.StringProperty()
+  """
+  Database Maps Class: for storing Google Maps API key
+  """
+  keyid = ndb.StringProperty()
 
 class Users(ndb.Model):
-    userid = ndb.StringProperty()
-    owner = ndb.BooleanProperty()
-    name = ndb.StringProperty()
-    picture = ndb.StringProperty()
+  """
+  Database Users Class: for storing allowed users
+  """
+  userid = ndb.StringProperty()
+  owner = ndb.BooleanProperty()
+  name = ndb.StringProperty()
+  picture = ndb.StringProperty()
 
 class Keys(ndb.Model):
-    keyid = ndb.StringProperty()  
+  """
+  Database Keys Class: holds the backitude access key
+  """
+  keyid = ndb.StringProperty()
 
 class FriendUrls(ndb.Model):
+  """
+  Database Friends URL Class: holds the random keys to allow friends access
+  """
   keyid = ndb.StringProperty()
 
 class oauthTest(webapp2.RequestHandler):
@@ -124,6 +183,9 @@ class oauthTest(webapp2.RequestHandler):
       
   
 class MainPage(webapp2.RequestHandler):
+  """
+  Generates the main map page
+  """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
@@ -163,6 +225,12 @@ class MainPage(webapp2.RequestHandler):
 
 
 class setupOwner(webapp2.RequestHandler):
+  """
+  Creates the user setup process
+
+  GET: Creates the form asking for name and Google Maps API key
+  POST: Creates the new owner user and displays the backitude access key
+  """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
@@ -225,6 +293,9 @@ class setupOwner(webapp2.RequestHandler):
       noAccess(user,self.response,"/setup")
       
 class newFriendUrl(webapp2.RequestHandler):
+  """
+  Creates a new random URL to allow a friend access
+  """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
@@ -241,6 +312,9 @@ class newFriendUrl(webapp2.RequestHandler):
       self.response.write(template.render(template_values))
    
 class viewURLs(webapp2.RequestHandler):
+  """
+  Displays the unused friend URLs
+  """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
@@ -255,6 +329,12 @@ class viewURLs(webapp2.RequestHandler):
       self.response.write(template.render(template_values))
 
 class addViewer(webapp2.RequestHandler):
+  """
+  Add a new user to the allowed views
+
+  Gets the key from the URL and check it's in the database of friend URL keys, if it is add the user
+  and delete the key from the database as it has now been used.
+  """
   @decorator.oauth_required
   def get(self,key):
     dbKey = FriendUrls.get_by_id(key)
@@ -278,6 +358,9 @@ class addViewer(webapp2.RequestHandler):
       self.abort(403)
       
 class viewKey (webapp2.RequestHandler):
+  """
+  Display the backitude key to the user
+  """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
@@ -293,7 +376,22 @@ class viewKey (webapp2.RequestHandler):
       self.abort(403)
     
         
-class insertLocation(webapp2.RequestHandler): 
+class insertLocation(webapp2.RequestHandler):
+  """
+  Endpoint for the app to insert locations using the Google takeout json format.
+
+  For example:
+  {
+    "timestampMs" : "1000000000000",
+    "latitudeE7" : 000000000,
+    "longitudeE7" : -00000000,
+    "accuracy" : 10,
+    "velocity" : 0,
+    "heading" : 0,
+    "altitude" : 0,
+    "verticalAccuracy" : 0
+  }
+  """
   def post(self):
     self.response.headers['Content-Type'] = 'application/json'
     try:
@@ -330,6 +428,10 @@ class insertLocation(webapp2.RequestHandler):
 
 
 class insertBack(webapp2.RequestHandler):
+  """
+  Endpoint for inserting locations from backitude
+  """
+  #noinspection PyBroadException
   def post(self):
     try:
       key = self.request.POST['key']
