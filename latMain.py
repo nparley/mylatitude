@@ -193,7 +193,7 @@ class MainPage(webapp2.RequestHandler):
     if checkUser(user,self.response):
       try:
         owner = Users.query(Users.owner==True).fetch(1)[0]
-      except:
+      except IndexError:
         greeting =  'Run /setup first'
         template = JINJA_ENVIRONMENT.get_template('default.html')
         template_values = {'content':greeting}
@@ -262,10 +262,10 @@ class setupOwner(webapp2.RequestHandler):
       try:
         mapKey = self.request.POST['mapKey']
         userName = self.request.POST['userName']
-      except:
-        greeting = 'Map Key or User Name not set'
-        template_values = {'content':greeting}
-        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      except KeyError:
+        content = 'Map Key or User Name not set'
+        template_values = {'content':content,'header':'Setup Error'}
+        template = JINJA_ENVIRONMENT.get_template('default.html')
         self.response.write(template.render(template_values))
         return
       adminUser = Users(id=user['id'])
@@ -418,7 +418,7 @@ class insertLocation(webapp2.RequestHandler):
       newLocation.altitude = int(postBody['altitude'])
       newLocation.verticalAccuracy = int(postBody['verticalAccuracy'])
       newLocation.put()
-    except:
+    except (KeyError,ValueError):
       json_error(self.response,400,"Unexpected error")
       return
                 
@@ -443,7 +443,7 @@ class insertBack(webapp2.RequestHandler):
       accuracy = int(float(self.request.POST['accuracy']))
       try:
         altitude = int(float(self.request.POST['altitude']))
-      except:
+      except (KeyError,ValueError):
         altitude = 0    
       # Backitude has two timestamps due to the fact it can repost old
       # locations. 
@@ -458,7 +458,7 @@ class insertBack(webapp2.RequestHandler):
       # You can decide to try and record the heading if you would like
       try:
         speed = int(float(self.request.POST['speed']))
-      except:
+      except (KeyError,ValueError):
         speed = 0
   #     direction = int(float(self.request.POST['direction']))
       
@@ -469,7 +469,7 @@ class insertBack(webapp2.RequestHandler):
       try:
         timestampDate = datetime.datetime.utcfromtimestamp(timestamp)
         timestamp *= 1000
-      except:
+      except ValueError:
         pass
       
     except KeyError, e:
@@ -496,7 +496,7 @@ class insertBack(webapp2.RequestHandler):
       newLocation.altitude = altitude
       newLocation.verticalAccuracy = 0
       newLocation.put()
-    except:
+    except ValueError:
       logging.debug('DB insert error')
       logging.debug(self.request)
       json_error(self.response,400,"DB insert error" )
