@@ -13,15 +13,22 @@
       <li><a href="/">{{userName}}'s Latitude</a></li>
       
       	  <li><a href="/">History</a></li>
-	      <li><a href="/">Linked Apps</a></li>
-	      <li><a href="/viewkey">View Key</a></li>
-	      <li><a href="/newfriend">Add Friend</a></li>
-	      <li><a href="/viewurls">View URLs</a></li>
+	      <li><a href="/">Friends</a></li>
+	      <li><a href="/admin">Admin</a></li>
       
     </ul>
   </div></div>
+  <div class="contentContainer">
   <div class="content">
+  <div class="info">
+  <h3>{{header}}</h3>
   {{content}}
+  </div>
+  <div url="/admin" class="settings">
+  <h3>Admin Settings</h3>
+  Return to admin settings
+  </div>
+  </div>
   </div>
   </body>
 </html>

@@ -5,25 +5,32 @@
     <meta charset="utf-8">
     <title>My Latitude</title>
     <link href="/stylesheets/default.css" rel="stylesheet">
-    
+
   </head>
   <body>
   <div class="header"><div class="headerContainer">
   <ul id="left-nav">
       <li><a href="/">My Latitude</a></li>
-            
-    </ul>
+
+  </ul>
   </div></div>
+  <div class="contentContainer">
   <div class="content">
+  <div class="info">
   <h2>User Setup</h2>
+  <br/>Enter your name for the title of the app, for example John's Latitude. You can find your Google Maps API key
+  in the Google API console console under your Google App Engine App in the Key for browser apps section.
+  <br/><br/>
   <form id="form_688017" class="appnitro"  method="post" action="">
   <label class="description" for="userName">Name </label><br/>
-  <input id="userName" name="userName" class="element text medium" type="text" maxlength="255" value="{{userName}}"/> <br/>
+  <input id="userName" name="userName" class="element text medium" type="text" maxlength="255" value="{{userName}}"/> <br/><br/>
   <label class="description" for="mapKey">Google Maps Key </label><br/>
   <input id="mapKey" name="mapKey" class="element text medium" type="text" size="50" maxlength="255" value=""/>
   <input type="hidden" name="form_key" value="{{key}}" /><br/><br/>
   <input id="saveForm" class="button_text" type="submit" name="submit" value="Setup App" />
   </form>
+  </div>
+  </div>
   </div>
   </body>
 </html>
