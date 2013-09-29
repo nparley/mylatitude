@@ -244,7 +244,16 @@ class setupOwner(webapp2.RequestHandler):
       return
     user = service.userinfo().get().execute(http=http)
     if user:
-      template_values = {'userName':user['given_name']}
+      try:
+        currentSetupKey = SetupFormKey.query().fetch(1)[0]
+        currentSetupKey.key.delete()
+      except IndexError:
+        pass # No setup key
+      newRandomKey = randomKey(15)
+      newSetupKey = SetupFormKey(id=newRandomKey)
+      newSetupKey.keyid = newRandomKey
+      newSetupKey.put()
+      template_values = {'userName':user['given_name'],'key':newRandomKey}
       template = JINJA_ENVIRONMENT.get_template('userSetup.html')
       self.response.write(template.render(template_values))
     else:
@@ -252,6 +261,12 @@ class setupOwner(webapp2.RequestHandler):
       
   @decorator.oauth_required    
   def post(self):
+    try:
+      formKeyCheck = SetupFormKey.get_by_id(self.request.POST['form_key'])
+      if not formKeyCheck:
+        raise KeyError
+    except KeyError:
+      self.abort(401)
     numberOfUsers = Users.query().count()
     if numberOfUsers > 0:
       template_values = {'content':'Already setup'}
