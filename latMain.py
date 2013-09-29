@@ -407,6 +407,29 @@ class viewKey (webapp2.RequestHandler):
     else:
       self.abort(403)
     
+class newKey (webapp2.RequestHandler):
+  """
+  Create a new backitude key and delete the old one
+  """
+  @decorator.oauth_required
+  def get(self):
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/newkey'):
+      try:
+        currentKey = Keys.query().fetch(1)[0]
+        currentKey.key.delete()
+      except IndexError:
+        pass #for some reason the key already got deleted
+      newRandomKey = randomKey(15)
+      newKeyObj = Keys(id=newRandomKey)
+      newKeyObj.keyid = newRandomKey
+      newKeyObj.put()
+      content = '%s' % newRandomKey
+      header = 'Your new key is:'      
+      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name} 
+      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      self.response.write(template.render(template_values))
         
 class insertLocation(webapp2.RequestHandler):
   """
