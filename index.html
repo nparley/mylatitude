@@ -1,141 +1,46 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <title>{{userName}}'s Latitude</title>
     <link href="/stylesheets/default.css" rel="stylesheet">
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key={{key}}&sensor=false"></script>
     <script>
-    function loadBackEnd() { // Callback from google's client library loading
-      var apisToLoad;
-   	  var callback = function() {
-   	    if (--apisToLoad == 0) {
-   	      signin(true, userAuthed); // only called once both APIs are loaded
-   	    }
-   	  }
-
-   	  apisToLoad = 2; // must match number of calls to gapi.client.load()
-   	  gapi.client.load('mylatitude', 'v1', callback, '{{apiRoot}}');
-   	  gapi.client.load('oauth2', 'v2', callback);
-   	}    
-       	
-    function signin(mode, callback) { // clientID filled in by template, immediate = true because we should not need to ask permission again
-   	  	gapi.auth.authorize({client_id: "{{clientID}}",
-   	    scope: ["https://www.googleapis.com/auth/userinfo.email","https://www.googleapis.com/auth/userinfo.profile"], immediate: true,
-   	    response_type: 'token'}, // Can't use id tokens as we can't get the user if from an id token
-   	    callback);
-   	}
-    
-    function userAuthed() {
-      
-   	  var request =
-   	    gapi.client.oauth2.userinfo.get().execute(function(resp) { // Check the token by calling userinfo, if it's ok call our end point
-   	      if (!resp.code) {
-   	      	var token = gapi.auth.getToken();
-   	   	  	gapi.client.mylatitude.location.last().execute(function(resp) { // this does not do anything yet it's just a test.
-   		  	//console.log(resp);
-   			});
-   	      }
-   	    });
-   	}
-    
-    var locations = {{locations}};
-    
-	function initialize() {
-		var mapOptions = {
-		    zoom: 16,
-		    center: new google.maps.LatLng(locations[0].latitude,locations[0].longitude),
-		    mapTypeId: google.maps.MapTypeId.ROADMAP
-	  	}
-	  	var map = new google.maps.Map(document.getElementById('map_canvas'),
-	                                mapOptions);
-	  
-		var locationCircle = null;
-		var locationAccuracy = null;
-		var infoWindow = new google.maps.InfoWindow({
-      		content: "test"
-  		});
-		function updateLocation(location){
-  			if (location.timeStamp > 0) {
-	  			if (locationCircle != null) locationCircle = null;
-	  			if (locationAccuracy != null) locationAccuracy = null;
-	  			var center = new google.maps.LatLng(location.latitude,location.longitude);
-	  			infoWindow.close();
-	  			infoWindow.setPosition(center);
-  				locationAccuracy = new google.maps.Circle({
-		        	center: center,
-			        radius: location.accuracy,
-			        strokeColor: "#66CCFF",
-			        strokeOpacity: 0.8,
-			        strokeWeight: 2,
-			        fillColor: "#66CCFF",
-			        fillOpacity: 0.35,
-			        map: map
-		    	});
-		    	locationCircle = new google.maps.Circle({
-		        	center: center,
-			        radius: 5,
-			        strokeColor: "#6699FF",
-			        strokeOpacity: 0.8,
-			        strokeWeight: 2,
-			        fillColor: "#6699FF",
-			        fillOpacity: 0.8,
-			        map: map
-		    	});
-		    	var d = new Date(location.timeStamp)
-		    	var dNow = new Date()
-		    	var diff = dNow.getTime() - d.getTime();
-		    	diff /= 60000;
-		    	diffText = "minutes";
-		    	if (diff > 60) { diff /= 60; diffText = "hours"}
-		    	diff = Math.round(diff);
-		    	infoWindow.setPosition(center);
-		    	updateString = "<img src='{{ownerPic}}' height='50' width='50' style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> <strong> {{userName}}'s location </strong><br/>";
-		    	updateString += "<a href='http://maps.google.com/maps?saddr=&daddr="+location.latitude+","+location.longitude+"'> Directions Link</a><br/>" ;
-		    	updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
-		    	updateString += "at: " + d.toTimeString() + "<br/>";
-		    	updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";
-		    	
-		    	var div = document.createElement('div'); 
-		    	div.className = "infoWin";
-				div.innerHTML = updateString; 
-				
-		    	infoWindow.setContent(div);
-		    	
-		    	infoWindow.open(map);
-		    	google.maps.event.addListener(locationAccuracy, 'click', function() {
-			    	infoWindow.open(map);
-		    	});
-		    	google.maps.event.addListener(locationCircle, 'click', function() {
-			    	infoWindow.open(map);
-		    	});
-		    	
-		    			    	
-		    }
-  		}
-  		updateLocation(locations[0]);  
-  		
-  	}
-	
-	google.maps.event.addDomListener(window, 'load', initialize);
-	
-	</script>
-	<script src="https://apis.google.com/js/client.js?onload=loadBackEnd"></script>
-  </head>
-  <body>
-  <div class="header"><div class="headerContainer">
-  <ul id="left-nav">
-      <li><a href="/">{{userName}}'s Latitude</a></li>
-      {% if owner==true %}
-      	  <li><a href="/">History</a></li>
-	      <li><a href="/">Friends</a></li>
-	      <li><a href="/admin">Admin</a></li>
-      {% endif %}
-    </ul>
-  </div></div>
-  <div class="map_container">
+        //noinspection UnterminatedStatementJS
+        var locations = {{locations}};
+        var userName = "{{userName}}";
+        var userPic = "{{ownerPic}}";
+        function loadBackEnd() { // Callback from google's client library loading
+        var apisToLoad;
+            var callback = function () {
+                if (--apisToLoad == 0) {
+                    signin(true, userAuthed, "{{clientID}}"); // only called once both APIs are loaded
+                }
+            };
+            apisToLoad = 2; // must match number of calls to gapi.client.load()
+            gapi.client.load('mylatitude', 'v1', callback, '{{apiRoot}}');
+            gapi.client.load('oauth2', 'v2', callback);
+        }
+    </script>
+    <script src="/js/map.js"></script>
+    <script src="https://apis.google.com/js/client.js?onload=loadBackEnd"></script>
+</head>
+<body>
+<div class="header">
+    <div class="headerContainer">
+        <ul id="left-nav">
+            <li><a href="/">{{userName}}'s Latitude</a></li>
+            {% if owner==true %}
+            <li><a href="/">History</a></li>
+            <li><a href="/">Friends</a></li>
+            <li><a href="/admin">Admin</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+<div class="map_container">
     <div id="map_canvas"></div>
-  </div>
-  </body>
+</div>
+</body>
 </html>
