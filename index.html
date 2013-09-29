@@ -12,7 +12,7 @@
         var userName = "{{userName}}";
         var userPic = "{{ownerPic}}";
         function loadBackEnd() { // Callback from google's client library loading
-        var apisToLoad;
+            var apisToLoad;
             var callback = function () {
                 if (--apisToLoad == 0) {
                     signin(true, userAuthed, "{{clientID}}"); // only called once both APIs are loaded
@@ -24,6 +24,7 @@
         }
     </script>
     <script src="/js/map.js"></script>
+    <script src="/js/endpoints.js"></script>
     <script src="https://apis.google.com/js/client.js?onload=loadBackEnd"></script>
 </head>
 <body>
