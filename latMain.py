@@ -49,9 +49,9 @@ def noAccess(user,output,forwardURL='/'):
   @return: None
   """
   template = JINJA_ENVIRONMENT.get_template('default.html')
-  greeting = ('Sorry, %s you do not have access! (<a href="%s">sign out</a>)' %
+  content = ('Sorry, %s you do not have access to this app! (<a href="%s">sign out</a>)' %
                 (user['name'], users.create_logout_url(forwardURL)))
-  template_values = {'content':greeting}
+  template_values = {'content':content,'header':'No Access'}
   output.write(template.render(template_values))
 
 # def signIn(user,output,forwardURL='/'):
@@ -244,7 +244,7 @@ class setupOwner(webapp2.RequestHandler):
     http = decorator.http()
     numberOfUsers = Users.query().count()
     if numberOfUsers > 0:
-      template_values = {'content':'Already setup'}
+      template_values = {'content':'This app already has an owning user, nothing to do here','header':'Already setup'}
       template = JINJA_ENVIRONMENT.get_template('default.html')
       self.response.write(template.render(template_values))
       return
@@ -275,8 +275,8 @@ class setupOwner(webapp2.RequestHandler):
       self.abort(401)
     numberOfUsers = Users.query().count()
     if numberOfUsers > 0:
-      template_values = {'content':'Already setup'}
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      template_values = {'content':'This app already has an owning user, nothing to do here','header':'Already setup'}
+      template = JINJA_ENVIRONMENT.get_template('default.html')
       self.response.write(template.render(template_values))
       return
     http = decorator.http()
@@ -304,12 +304,12 @@ class setupOwner(webapp2.RequestHandler):
       gmaps.keyid = mapKey
       gmaps.put()
       key = randomKey(15)
-      newKey = Keys(id=key)
-      newKey.keyid = key
-      newKey.put()
-      greeting = ('All setup, %s you have access!' % userName)
-      greeting += '<br/> Your Backitude key is: %s' % key
-      template_values = {'content':greeting,'userName': userName}
+      newKeyObj = Keys(id=key)
+      newKeyObj.keyid = key
+      newKeyObj.put()
+      content = ('All setup, %s you have access!' % userName)
+      content += '<br/> Your Backitude key is: %s' % key
+      template_values = {'content':content,'userName': userName,'header':'Setup Complete'}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
     else:
@@ -329,8 +329,8 @@ class newFriendUrl(webapp2.RequestHandler):
       newURL.keyid = key
       newURL.put()
       url = "%s/addviewer/%s" % (self.request.host_url,key)
-      greeting = 'Send your friend this url: %s' % url
-      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name}
+      content = 'Send your friend this url:<br/><br/> %s' % url
+      template_values = {'content':content,'header':'New Friend URL','userName': Users.get_by_id(user['id']).name}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
    
@@ -344,10 +344,10 @@ class viewURLs(webapp2.RequestHandler):
     user = service.userinfo().get().execute(http=http)
     if checkOwnerUser(user,self.response,forwardURL='/viewurls'):
       currentURLs = FriendUrls.query().fetch(10)
-      greeting = "These URLs are active to enable friends to view your location: <br/>"
+      content = "These URLs are active to enable friends to view your location: <br/>"
       for url in currentURLs:
-        greeting += "%s/addviewer/%s <br/>" % (self.request.host_url,url.keyid)
-      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name}
+        content += "<br/>%s/addviewer/%s <br/>" % (self.request.host_url,url.keyid)
+      template_values = {'content':content,'header':'Friend URLs','userName': Users.get_by_id(user['id']).name}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
 
