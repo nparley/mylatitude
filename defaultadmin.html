@@ -1,35 +1,37 @@
 <!DOCTYPE html>
 <html>
-  <head>
+<head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <title>{{userName}}'s Latitude</title>
     <link href="/stylesheets/default.css" rel="stylesheet">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="/js/main.js"></script>
-  </head>
-  <body>
-  <div class="header"><div class="headerContainer">
-  <ul id="left-nav">
-      <li><a href="/">{{userName}}'s Latitude</a></li>
-      
-      	  <li><a href="/">History</a></li>
-	      <li><a href="/">Friends</a></li>
-	      <li><a href="/admin">Admin</a></li>
-      
-    </ul>
-  </div></div>
-  <div class="contentContainer">
-  <div class="content">
-  <div class="info">
-  <h3>{{header}}</h3>
-  {{content}}
-  </div>
-  <div url="/admin" class="settings">
-  <h3>Admin Settings</h3>
-  Return to admin settings
-  </div>
-  </div>
-  </div>
-  </body>
+</head>
+<body>
+<div class="header">
+    <div class="headerContainer">
+        <ul id="left-nav">
+            <li><a href="/">{{userName}}'s Latitude</a></li>
+
+            <li><a href="/">History</a></li>
+            <li><a href="/">Friends</a></li>
+            <li><a href="/admin">Admin</a></li>
+
+        </ul>
+    </div>
+</div>
+<div class="contentContainer">
+    <div class="content">
+        <div class="info">
+            <h3>{{header}}</h3>
+            {{content}}
+        </div>
+        <div url="/admin" class="settings">
+            <h3>Admin Settings</h3>
+            Return to admin settings
+        </div>
+    </div>
+</div>
+</body>
 </html>
