@@ -171,6 +171,12 @@ class FriendUrls(ndb.Model):
   """
   keyid = ndb.StringProperty()
 
+class SetupFormKey(ndb.Model):
+  """
+  Holds the setup form key
+  """
+  keyid = ndb.StringProperty()
+
 #class oauthTest(webapp2.RequestHandler):
 #  @decorator.oauth_required
 #  def get(self):
