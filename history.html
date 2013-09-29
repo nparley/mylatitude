@@ -3,16 +3,14 @@
 <head>
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
-    <title>{{userName}}'s Latitude</title>
+    <title>{{userName}}'s Latitude (History)</title>
     <link href="/stylesheets/default.css" rel="stylesheet">
     <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key={{key}}&sensor=false"></script>
     <script>
         //noinspection UnterminatedStatementJS
-        var locations = {{locations}};
         var userName = "{{userName}}";
-        var userPic = "{{ownerPic}}";
         function loadBackEnd() { // Callback from google's client library loading
-        var apisToLoad;
+            var apisToLoad;
             var callback = function () {
                 if (--apisToLoad == 0) {
                     signin(true, userAuthed, "{{clientID}}"); // only called once both APIs are loaded
@@ -23,7 +21,8 @@
             gapi.client.load('oauth2', 'v2', callback);
         }
     </script>
-    <script src="/js/map.js"></script>
+    <script src="/js/historyMap.js"></script>
+    <script src="/js/endpoints.js"></script>
     <script src="https://apis.google.com/js/client.js?onload=loadBackEnd"></script>
 </head>
 <body>
@@ -31,11 +30,9 @@
     <div class="headerContainer">
         <ul id="left-nav">
             <li><a href="/">{{userName}}'s Latitude</a></li>
-            {% if owner==true %}
             <li><a href="/history">History</a></li>
             <li><a href="/">Friends</a></li>
             <li><a href="/admin">Admin</a></li>
-            {% endif %}
         </ul>
     </div>
 </div>

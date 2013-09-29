@@ -380,6 +380,22 @@ class addViewer(webapp2.RequestHandler):
     else:
       self.abort(403)
 
+class viewHistory (webapp2.RequestHandler):
+  """
+  View the history page for the app
+  """
+  @decorator.oauth_required
+  def get(self):
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
+      clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
+      apiRoot = "%s/_ah/api" % self.request.host_url
+      template_values = {'userName': Users.get_by_id(user['id']).name, 'clientID': clientObj[1]['client_id'],
+                         'apiRoot': apiRoot}
+      template = JINJA_ENVIRONMENT.get_template('history.html')
+      self.response.write(template.render(template_values))
+
 class viewAdmin (webapp2.RequestHandler):
   """
   View the admin settings page for the app
@@ -581,6 +597,7 @@ class insertBack(webapp2.RequestHandler):
 application = webapp2.WSGIApplication(
   [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
    ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
-   ('/admin', viewAdmin), ('/newkey', newKey), (decorator.callback_path, decorator.callback_handler()),
+   ('/admin', viewAdmin), ('/newkey', newKey), ('/history', viewHistory),
+   (decorator.callback_path, decorator.callback_handler()),
    webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
 
