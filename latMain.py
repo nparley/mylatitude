@@ -211,7 +211,8 @@ class MainPage(webapp2.RequestHandler):
         latitude = location.latitudeE7 / 1E7
         longitude = location.longitudeE7 / 1E7
         accuracy = location.accuracy
-        locationArray.append({'latitude':latitude,'longitude':longitude,'accuracy':accuracy,'timeStamp':float(timeStamp)})
+        locationArray.append(
+          {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy, 'timeStamp': float(timeStamp)})
       
       if len(locationArray) == 0: # Default to Edinburgh Castle
         locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStamp':0}) 
@@ -219,7 +220,9 @@ class MainPage(webapp2.RequestHandler):
       clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
       apiRoot = "%s/_ah/api" % self.request.host_url  
       template = JINJA_ENVIRONMENT.get_template('index.html')
-      template_values = {'locations': locationArray, 'userName': owner.name, 'key':str(gKey.keyid),'owner':Users.get_by_id(user['id']).owner, 'ownerPic':owner.picture, 'apiRoot':apiRoot,'clientID':clientObj[1]['client_id']}
+      template_values = {'locations': locationArray, 'userName': owner.name, 'key': str(gKey.keyid),
+                         'owner': Users.get_by_id(user['id']).owner, 'ownerPic': owner.picture, 'apiRoot': apiRoot,
+                         'clientID': clientObj[1]['client_id']}
       self.response.write(template.render(template_values))
 
 
@@ -522,8 +525,10 @@ class insertBack(webapp2.RequestHandler):
     self.response.set_status(200)
     self.response.out.write(json.dumps(response))
 
-application = webapp2.WSGIApplication([('/', MainPage),('/insert',insertLocation),('/backitude',insertBack),('/setup',setupOwner),
-                                       ('/viewkey',viewKey),('/newfriend',newFriendUrl),('/viewurls',viewURLs),#('/test',oauthTest),
-                                       ('/admin',viewAdmin),('/newkey',newKey),(decorator.callback_path, decorator.callback_handler()),
-                                       webapp2.Route('/addviewer/<key>',handler=addViewer,name='addviewer')], debug=True)
+
+application = webapp2.WSGIApplication(
+  [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
+   ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
+   ('/admin', viewAdmin), ('/newkey', newKey), (decorator.callback_path, decorator.callback_handler()),
+   webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
 
