@@ -404,10 +404,18 @@ class viewKey (webapp2.RequestHandler):
     http = decorator.http()
     user = service.userinfo().get().execute(http=http)
     if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
-      currentKeys = Keys.query().fetch(1)
-      key = currentKeys[0].keyid
-      greeting = 'Your key is: %s' % key
-      template_values = {'content':greeting,'userName': Users.get_by_id(user['id']).name} 
+      try:
+        currentKeys = Keys.query().fetch(1)
+        key = currentKeys[0].keyid
+      except IndexError:
+        content = 'You have no backitude error (Please create a new key'
+        template_values = {'content':content,'userName': Users.get_by_id(user['id']).name,'header':'Missing Key'}
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+        self.response.write(template.render(template_values))
+        return
+      content = '%s' % key
+      header = 'Your key is:'
+      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name} 
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
     else:
