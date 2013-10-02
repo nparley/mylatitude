@@ -4,6 +4,8 @@
     <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
     <meta charset="utf-8">
     <title>{{userName}}'s Latitude</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,300' rel='stylesheet' type='text/css'>
     <link href="/stylesheets/default.css" rel="stylesheet">
     <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
     <script src="/js/main.js"></script>
@@ -12,12 +14,11 @@
 <div class="header">
     <div class="headerContainer">
         <ul id="left-nav">
-            <li><a href="/">{{userName}}'s Latitude</a></li>
-
-            <li><a href="/history">History</a></li>
-            <li><a href="/">Friends</a></li>
-            <li><a href="/admin">Admin</a></li>
-
+            <li class="headInfo">Admin Settings</li>
+            <li><a id="map" title="{{userName}}'s Location" href="/"></a></li>
+            <li><a id="history" title="History View" href="/history"></a></li>
+            <li><a id="friends" title="Friends Locations" href="/"></a></li>
+            <li><a id="settings" title="Admin Settings" href="/admin"></a></li>
         </ul>
     </div>
 </div>
@@ -28,7 +29,7 @@
             {{content}}
         </div>
         <div url="/admin" class="settings">
-            <h3>Admin Settings</h3>
+            <h3> <img src="images/previous.png">Admin Settings</h3>
             Return to admin settings
         </div>
     </div>
