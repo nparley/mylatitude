@@ -10,6 +10,8 @@ handlers:
   upload: images/favicon.ico
 - url: /stylesheets
   static_dir: stylesheets
+- url: /glDatePicker
+  static_dir: glDatePicker
 - url: /images
   static_dir: images
 - url: /js
