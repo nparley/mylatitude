@@ -32,11 +32,104 @@ h3 > img {
 }
 
 .map_container {
-    position: fixed;
+    position: absolute;
     top: 50px;
+    width: 100%;
     right: 0;
     left: 0;
     bottom: 0;
+}
+
+div.historyCalMin {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    height: 32px;
+    width: 32px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -16px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    display: inline-block;
+    background-image: url("/images/up.png");
+    cursor: pointer;
+}
+
+div.historyCalMax {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    height: 250px;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -150px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    vertical-align: top;
+}
+
+div.historyCalMin:hover {
+    background-image: url("/images/upOver.png");
+}
+
+.historyDate {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    height: 50px;
+    width: 300px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -150px;
+    font-size: 20px;
+    font-weight: 400;
+    text-align: center;
+    line-height: 50px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    /*vertical-align: middle;*/
+}
+
+
+div.historyDate > ul > li {
+    padding-left: 3px;
+    padding-right: 3px;
+    text-decoration: none;
+    height: 49px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: top;
+    cursor: pointer;
+}
+
+div.historyDate > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+div.historyDate > ul > li.icons {
+    background: no-repeat center center;
+    width:32px;
+}
+div.historyDate > ul > li.icons#next {
+    background-image: url("/images/next.png");
+}
+div.historyDate > ul > li.icons#next:hover {
+    background-image: url("/images/nextOver.png");
+}
+div.historyDate > ul > li.icons#previous {
+    background-image: url("/images/previous.png");
+}
+div.historyDate > ul > li.icons#previous:hover {
+    background-image: url("/images/previousOver.png");
+}
+div.historyDate > ul > li#currentDate {
+    width: 160px;
 }
 
 .headInfo {
