@@ -27,7 +27,7 @@ function initialize() {
         zoom: 16,
         center: new google.maps.LatLng(locations[0].latitude, locations[0].longitude),
         mapTypeId: google.maps.MapTypeId.ROADMAP
-    }
+    };
     var map = new google.maps.Map(document.getElementById('map_canvas'),
         mapOptions);
 
@@ -39,10 +39,9 @@ function initialize() {
 
     function updateLocation(location,userName,userPic) {
         if (location.timeStamp > 0) {
-            if (locationCircle != null) locationCircle = null;
-            if (locationAccuracy != null) locationAccuracy = null;
             var center = new google.maps.LatLng(location.latitude, location.longitude);
             infoWindow.close();
+            //noinspection JSValidateTypes
             infoWindow.setPosition(center);
             locationAccuracy = new google.maps.Circle({
                 center: center,
@@ -64,18 +63,21 @@ function initialize() {
                 fillOpacity: 0.8,
                 map: map
             });
-            var d = new Date(location.timeStamp)
-            var dNow = new Date()
+            var d = new Date(location.timeStamp);
+            var dNow = new Date();
             var diff = dNow.getTime() - d.getTime();
             diff /= 60000;
-            diffText = "minutes";
+            var diffText = "minutes";
             if (diff > 60) {
                 diff /= 60;
                 diffText = "hours"
             }
             diff = Math.round(diff);
+            //noinspection JSValidateTypes
             infoWindow.setPosition(center);
-            updateString = "<img src='"+userPic+"' height='50' width='50' style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> <strong>"+userName+"'s location </strong><br/>";
+            var updateString = "<img src='" +userPic+"' height='50' width='50' " +
+                "style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> " +
+                "<strong>"+userName+"'s location </strong><br/>";
             updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + "," + location.longitude + "'> Directions Link</a><br/>";
             updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
             updateString += "at: " + d.toTimeString() + "<br/>";

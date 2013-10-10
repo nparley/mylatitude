@@ -57,7 +57,8 @@ class Location(EndpointsModel):
     altitude = ndb.IntegerProperty()
     verticalAccuracy = ndb.IntegerProperty()
 
-@endpoints.api(name='mylatitude', version='v1', description='Rest API to the location data',allowed_client_ids=ALLOWED_CLIENT_IDS)
+@endpoints.api(name='mylatitude', version='v1', description='Rest API to the location data',
+               allowed_client_ids=ALLOWED_CLIENT_IDS)
 class myLatAPI(remote.Service):
   @Location.query_method(user_required=True,
                         path='lastLocation', name='location.last',limit_default=1,limit_max=1)
