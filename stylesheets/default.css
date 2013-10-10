@@ -111,9 +111,7 @@ div.header > div > ul > li {
 }
 
 div.header > div > ul > li > a:hover {
-    background: rgba(72, 74, 111, 1);
-    background-position: center 8px;
-    background-repeat: no-repeat;
+    background: rgba(72, 74, 111, 1) no-repeat center 8px;
 }
 
 .leftNav {
@@ -183,14 +181,17 @@ div.header > div > ul > li > a:hover {
     div.header > div > ul > li > a:hover {
         background-position: center 4px;
     }
+
     div.header > div > ul > li {
 
         line-height: 40px;
         height: 40px;
     }
+
     .headInfo {
-       font-size: 13px;
+        font-size: 13px;
     }
+
     .header {
         height: 40px;
         line-height: 40px;
@@ -221,12 +222,15 @@ div.header > div > ul > li > a:hover {
         padding: 0;
         font-size: 0;
     }
+
     html, body {
         font-size: 12px;
     }
+
     h3 {
         font-size: 12px;
     }
+
     div.header > div > ul {
         padding-left: 5px;
     }
