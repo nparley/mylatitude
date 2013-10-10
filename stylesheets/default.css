@@ -14,10 +14,12 @@ h3 {
     margin-top: 10px;
     margin-bottom: 10px;
 }
+
 h3 > img {
-    display:inline-block;
+    display: inline-block;
     vertical-align: middle;
 }
+
 #map_canvas {
     z-index: 0;
     width: 100%;
