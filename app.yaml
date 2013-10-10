@@ -27,3 +27,6 @@ libraries:
   version: 2.6
 - name: pycrypto
   version: "2.6"  
+
+builtins:
+- deferred: on

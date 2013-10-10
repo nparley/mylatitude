@@ -9,6 +9,7 @@ logging.getLogger().setLevel(logging.DEBUG)
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from apiclient.discovery import build
+from google.appengine.ext import deferred
 
 import jinja2
 import webapp2
@@ -577,10 +578,53 @@ class insertBack(webapp2.RequestHandler):
     self.response.set_status(200)
     self.response.out.write(json.dumps(response))
 
+class exportLocations(webapp2.RequestHandler):
+  """Export the locations database"""
+  @decorator.oauth_required
+  def get(self):
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/admin'):
+      locationsQuery = Location.query().order(-Location.timestampMs).fetch()
+      locations = []
+      for location in locationsQuery:
+        locations.append(dict(timestampMs = location.timestampMs,
+                          latitudeE7 = location.latitudeE7,
+                          longitudeE7 = location.longitudeE7,
+                          accuracy = location.accuracy,
+                          velocity = location.velocity,
+                          heading = location.heading,
+                          altitude = location.altitude,
+                          verticalAccuracy = location.verticalAccuracy ))
+      self.response.headers['Content-Type'] = 'text/json'
+      self.response.headers['Content-Disposition'] = "attachment; filename=locationsExport.json"
+      self.response.out.write(json.dumps(dict(locations =locations)))
+
+def importLocationsTask(userObj):
+  # Take for importing data but probably don't need this
+  logging.info(userObj)
+  pass
+
+class importLocations(webapp2.RequestHandler):
+  """
+  Kicks off the exportLocation task
+  """
+  @decorator.oauth_required
+  def get(self):
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/importLocations'):
+      content = "Started exporting task, you will be emailed when it's finished<br/>"
+      template_values = {'content':content,'header':'Export Locations','userName': Users.get_by_id(user['id']).name}
+      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      #deferred.defer(importLocationsTask,user)
+      self.response.write(template.render(template_values))
 
 application = webapp2.WSGIApplication(
   [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
    ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
-   ('/admin', viewAdmin), ('/newkey', newKey), (decorator.callback_path, decorator.callback_handler()),
+   ('/admin', viewAdmin), ('/newkey', newKey),('/importLocations', importLocations),
+   ('/exportLocations', exportLocations),
+   (decorator.callback_path, decorator.callback_handler()),
    webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
 
