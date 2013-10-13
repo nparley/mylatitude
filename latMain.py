@@ -1,3 +1,5 @@
+import io
+import csv
 import os
 #import urllib
 #import sys
@@ -9,15 +11,20 @@ logging.getLogger().setLevel(logging.DEBUG)
 from google.appengine.api import users
 from google.appengine.ext import ndb
 from apiclient.discovery import build
+from google.appengine.ext import blobstore
 from google.appengine.ext import deferred
+from google.appengine.api import mail
+from google.appengine.api import app_identity
 
 import jinja2
 import webapp2
 import json
 import base64
+import zipfile
 
 from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
 #from oauth2client.client import AccessTokenRefreshError
+from google.appengine.ext.webapp import blobstore_handlers
 import oauth2client.clientsecrets
 
 decorator = OAuth2DecoratorFromClientSecrets(
@@ -131,6 +138,21 @@ def json_error(response, code, message):
     }
   response.write(json.dumps(result))
 
+def emailAfterTask(toEmail,taskName,message,attachment=None):
+  """
+  Call to send an email from admin@app-name.appspot.com that a task has finished
+
+  @param toEmail: String to email address, "example@example.com"
+  @param taskName: Name of the task that has finished
+  @param message: String message to send as the email body
+  @param attachment: Tuple of (attachmentFileName,attachmentData) or None for no attachment
+  @return: None
+  """
+  sender = "admin@%s" % app_identity.get_default_version_hostname()
+  if attachment:
+    mail.send_mail(sender=sender,to=toEmail,subject="Task %s Finished" % taskName,body=message,attachments=[attachment])
+  else:
+    mail.send_mail(sender=sender,to=toEmail,subject="Task %s Finished" % taskName,body=message)
   
 class Location(ndb.Model):
   """
@@ -579,52 +601,332 @@ class insertBack(webapp2.RequestHandler):
     self.response.out.write(json.dumps(response))
 
 class exportLocations(webapp2.RequestHandler):
-  """Export the locations database"""
-  @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/admin'):
+  """
+  Export the locations database
+
+  """
+  @staticmethod
+  def locationsToDict(startStamp=None,endStamp=None):
+    """
+    Output the location database as a json like dictionary
+
+    @param startStamp: Int timestampMs of the start date for export (inclusive) or None
+    @param endStamp:  Int timestampMs of the end date for export (inclusive) or None
+    @return: dict(locations:[{"timestampMs":1245...,"latitudeE7":1452...,...},{}...])
+    """
+    if startStamp and endStamp:
+      locationsQuery = Location.query(Location.timestampMs >= startStamp,
+                                      Location.timestampMs <= endStamp).order(-Location.timestampMs).fetch()
+    elif startStamp:
+      locationsQuery = Location.query(Location.timestampMs >= startStamp).order(-Location.timestampMs).fetch()
+    elif endStamp:
+      locationsQuery = Location.query(Location.timestampMs <= endStamp).order(-Location.timestampMs).fetch()
+    else:
       locationsQuery = Location.query().order(-Location.timestampMs).fetch()
-      locations = []
+    locations = []
+    for location in locationsQuery:
+      locations.append(dict(timestampMs = location.timestampMs,
+                        latitudeE7 = location.latitudeE7,
+                        longitudeE7 = location.longitudeE7,
+                        accuracy = location.accuracy,
+                        velocity = location.velocity,
+                        heading = location.heading,
+                        altitude = location.altitude,
+                        verticalAccuracy = location.verticalAccuracy ))
+    return dict(locations=locations)
+
+  @staticmethod
+  def locationsToCSV(startStamp=None,endStamp=None):
+    """
+    Output the location database as a CSV file similar to the output from bulkloader
+
+    @param startStamp: Int timestampMs of the start date for export (inclusive) or None
+    @param endStamp: Int timestampMs of the end date for export (inclusive) or None
+    @return: CSV file bytes
+    """
+    if startStamp and endStamp:
+      locationsQuery = Location.query(Location.timestampMs >= startStamp,
+                                      Location.timestampMs <= endStamp).order(-Location.timestampMs).fetch()
+    elif startStamp:
+      locationsQuery = Location.query(Location.timestampMs >= startStamp).order(-Location.timestampMs).fetch()
+    elif endStamp:
+      locationsQuery = Location.query(Location.timestampMs <= endStamp).order(-Location.timestampMs).fetch()
+    else:
+      locationsQuery = Location.query().order(-Location.timestampMs).fetch()
+
+    with io.BytesIO() as output:
+      writer = csv.writer(output)
+      writer.writerow(['timestampMs','latitudeE7','longitudeE7','accuracy','velocity','heading',
+                       'altitude','verticalAccuracy'])
+
       for location in locationsQuery:
-        locations.append(dict(timestampMs = location.timestampMs,
-                          latitudeE7 = location.latitudeE7,
-                          longitudeE7 = location.longitudeE7,
-                          accuracy = location.accuracy,
-                          velocity = location.velocity,
-                          heading = location.heading,
-                          altitude = location.altitude,
-                          verticalAccuracy = location.verticalAccuracy ))
-      self.response.headers['Content-Type'] = 'text/json'
-      self.response.headers['Content-Disposition'] = "attachment; filename=locationsExport.json"
-      self.response.out.write(json.dumps(dict(locations =locations)))
+        writer.writerow([location.timestampMs,location.latitudeE7,location.longitudeE7,location.accuracy,
+                         location.velocity,location.heading,location.altitude,location.verticalAccuracy])
 
-def importLocationsTask(userObj):
-  # Take for importing data but probably don't need this
-  logging.info(userObj)
-  pass
+      return output.getvalue()
 
-class importLocations(webapp2.RequestHandler):
+  @decorator.oauth_required
+  def post(self):
+    """
+    Post method to kick off the export task
+    """
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
+      content = 'Task started, you will be emailed with an an attachment when finished'
+      header = 'Export task started'
+      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
+      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      deferred.defer(exportLocationsTask,user,self.request.POST['format'])
+      self.response.write(template.render(template_values))
+
+
+def exportLocationsTask(userObj,outputFormat):
   """
-  Kicks off the exportLocation task
+  Export location task
+
+  @param userObj: User dict of the user who started the task for email and to check owner
+  @param outputFormat: Str "JSON" or "CSV" to define what format is exported
+  @return: None
+  """
+  userCheck = Users.get_by_id(userObj['id'])
+  if not userCheck.owner:
+    message = "Export Location called by non owner user"
+    logging.error(message)
+    emailAfterTask(userObj['email'],"Export Location",message)
+    return
+  with io.BytesIO() as output:
+    z = zipfile.ZipFile(output,'w')
+    if outputFormat == "JSON":
+      z.writestr("locations.json",json.dumps(exportLocations.locationsToDict()))
+    else:
+      z.writestr("locations.csv",exportLocations.locationsToCSV())
+    z.close()
+    message = "Please find locationsExport.zip attached to this email"
+    emailAfterTask(userObj['email'],"Export Location",message,("locationsExport.zip",output.getvalue()))
+  logging.info("Finished Export task")
+  return
+
+
+class importExport(webapp2.RequestHandler):
+  """
+  Import / Export page
+
+  Get: creates a import / export web page with a link to import and exporting the location data
   """
   @decorator.oauth_required
   def get(self):
     http = decorator.http()
     user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/importLocations'):
-      content = "Started exporting task, you will be emailed when it's finished<br/>"
-      template_values = {'content':content,'header':'Export Locations','userName': Users.get_by_id(user['id']).name}
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-      #deferred.defer(importLocationsTask,user)
+    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
+      upload_url = blobstore.create_upload_url('/importLocations')
+      template_values = {'url':upload_url,'userName': Users.get_by_id(user['id']).name}
+      template = JINJA_ENVIRONMENT.get_template('import_export.html')
       self.response.write(template.render(template_values))
+
+class importLocation(blobstore_handlers.BlobstoreUploadHandler):
+  """
+  Import locations into the database
+  """
+  @staticmethod
+  @ndb.toplevel
+  def importLocationsJSON(zipFile,fileName):
+    """
+    Imports JSON data from the uploaded Zip file
+
+    @param zipFile: Opened zip file object
+    @param fileName: Filename of the JSON file in the zip file
+    @return: new = number of values added, existing = number of values already in the database
+    @raise deferred.PermanentTaskFailure: Raises if there is a problem with the file
+    """
+    jsonObj = json.loads(zipFile.read(fileName))
+    existing = 0
+    new = 0
+    try:
+      for location in jsonObj['locations']:
+        newLocation = Location.get_by_id(id=str(location["timestampMs"]))
+        if newLocation:
+          existing += 1
+          continue
+        newLocation = Location(id=str(location["timestampMs"]))
+        newLocation.timestampMs = location["timestampMs"]
+        newLocation.latitudeE7 = location["latitudeE7"]
+        newLocation.longitudeE7 = location["longitudeE7"]
+        newLocation.accuracy = location["accuracy"]
+        newLocation.velocity = location["velocity"]
+        newLocation.heading = location["heading"]
+        newLocation.altitude = location["altitude"]
+        newLocation.verticalAccuracy = location["verticalAccuracy"]
+        #logging.info(newLocation)
+        newLocation.put_async()
+        new += 1
+    except (KeyError,IndexError):
+      raise deferred.PermanentTaskFailure("Format of input file is incorrect")
+    return new,existing
+
+
+  @staticmethod
+  @ndb.toplevel
+  def importLocationsCSV(zipFile,fileName):
+    """
+    Imports CSV data
+
+    Imports CSV data from the uploaded zip file. The function works out the mapping from
+    the headers in the first line of the file
+
+    @param zipFile: Opened zip file object
+    @param fileName: Filename of the CSV file
+    @return: new = number of values added, existing = number of values already in the database
+    @raise deferred.PermanentTaskFailure: Raises if there is a problem with the file
+    """
+    firstLine = True
+    existing = 0
+    new = 0
+    lookup = {}
+    with zipFile.open(fileName) as z:
+      for locationLine in z:
+        try:
+          if firstLine:
+            i = 0
+            for locationValues in locationLine.rstrip().split(","):
+              lookup[locationValues.strip()] = i
+              i += 1
+            firstLine = False
+            continue
+          locationValues = map(int,locationLine.rstrip().split(","))
+          newLocation = Location.get_by_id(id=str(locationValues[lookup["timestampMs"]]))
+          if newLocation:
+            existing += 1
+            continue
+          newLocation = Location(id=str(locationValues[lookup["timestampMs"]]))
+          newLocation.timestampMs = locationValues[lookup["timestampMs"]]
+          newLocation.latitudeE7 = locationValues[lookup["latitudeE7"]]
+          newLocation.longitudeE7 = locationValues[lookup["longitudeE7"]]
+          newLocation.accuracy = locationValues[lookup["accuracy"]]
+          newLocation.velocity = locationValues[lookup["velocity"]]
+          newLocation.heading = locationValues[lookup["heading"]]
+          newLocation.altitude = locationValues[lookup["altitude"]]
+          newLocation.verticalAccuracy = locationValues[lookup["verticalAccuracy"]]
+          #logging.info(newLocation)
+          newLocation.put_async()
+          new += 1
+        except (KeyError,IndexError):
+          raise deferred.PermanentTaskFailure("Format of input file is incorrect")
+    return new,existing
+
+  @decorator.oauth_required
+  def post(self):
+    """
+    Post method to kick off the import task
+
+    This method will fail if the upload to the blobstore failed
+    """
+    http = decorator.http()
+    user = service.userinfo().get().execute(http=http)
+    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
+      #noinspection PyBroadException
+      try:
+        upload = self.get_uploads()[0]
+        content = 'File uploaded, you will be sent an email when processing is finish'
+        header = 'File uploaded'
+        template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+        deferred.defer(importLocationsTask,user,upload.key())
+        self.response.write(template.render(template_values))
+      except:
+        content = 'Error uploading location File'
+        header = 'Error'
+        template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+        self.response.write(template.render(template_values))
+
+
+def importLocationsTask(userObj,blobKey):
+  """
+  Task to import the locations from the uploaded Zip file
+
+  @param userObj: User Dict for email and to check owner info
+  @param blobKey: Key of the uploaded file so we can read it from the blobstore
+  """
+  userCheck = Users.get_by_id(userObj['id'])
+  if not userCheck.owner:
+    logging.error("Import Location called by non owner user")
+    blobstore.delete(blobKey)
+    return
+  # check we can read from blobstore
+  #noinspection PyBroadException
+  try:
+    importFile = blobstore.BlobReader(blobKey)
+  except:
+    message = "Error reading uploading file, this file might not have been deleted"
+    logging.error(message)
+    emailAfterTask(userObj['email'],"Import Location",message)
+    return
+  # Check we have a zip file
+  try:
+    locationZipFile = zipfile.ZipFile(importFile)
+  except zipfile.BadZipfile:
+    message = "Uploaded file is not a zip file"
+    logging.error(message)
+    blobstore.delete(blobKey)
+    emailAfterTask(userObj['email'],"Import Location",message)
+    return
+
+  locationFile = None
+  locationFileType = None
+  # Find the first file which is a JSON or CSV file and use that
+  for fileName in locationZipFile.namelist():
+    if fileName.split(".")[-1] == ("json" or "JSON"):
+      locationFile = fileName
+      locationFileType = "JSON"
+      break
+    elif fileName.split(".")[-1] == ("csv" or "CSV"):
+      locationFile = fileName
+      locationFileType = "CSV"
+      break
+
+  if not locationFileType: # Have not found a JSON or CSV file
+    message = "Zip File does not contain json or csv"
+    logging.error(message)
+    blobstore.delete(blobKey)
+    emailAfterTask(userObj['email'],"Import Location",message)
+    return
+  elif locationFileType == "CSV": # CSV file found
+    try:
+      new,existing = importLocation.importLocationsCSV(locationZipFile,locationFile)
+    except deferred.PermanentTaskFailure, e:
+      logging.exception(e)
+      blobstore.delete(blobKey)
+      emailAfterTask(userObj['email'],"Import Location",e)
+      return
+  elif locationFileType == "JSON": # JSON file found
+    try:
+      new,existing = importLocation.importLocationsJSON(locationZipFile,locationFile)
+    except deferred.PermanentTaskFailure, e:
+      logging.exception(e)
+      blobstore.delete(blobKey)
+      emailAfterTask(userObj['email'],"Import Location",e)
+      return
+  else:
+    message = "Undefined File type" # Catch all if we have defined a new file type but not defined an import function
+    logging.error(message)
+    blobstore.delete(blobKey)
+    emailAfterTask(userObj['email'],"Import Location",message)
+    return
+
+  message = "Finished import task and all seems ok\n Imported %d new values and found %d existing values" % \
+            (new,existing)
+  logging.info(message)
+  blobstore.delete(blobKey)
+  emailAfterTask(userObj['email'],"Import Location",message)
+  return
+
 
 application = webapp2.WSGIApplication(
   [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
    ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
-   ('/admin', viewAdmin), ('/newkey', newKey),('/importLocations', importLocations),
-   ('/exportLocations', exportLocations),
+   ('/admin', viewAdmin), ('/newkey', newKey),('/importExport', importExport),
+   ('/exportLocations', exportLocations),('/importLocations',importLocation),
    (decorator.callback_path, decorator.callback_handler()),
    webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
 
