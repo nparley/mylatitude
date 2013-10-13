@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>{{userName}}'s Latitude (Import / Export)</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link href='http://fonts.googleapis.com/css?family=Roboto:500,400,300' rel='stylesheet' type='text/css'>
+    <link href="/stylesheets/default.css" rel="stylesheet">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="/js/main.js"></script>
+</head>
+<body>
+<div class="header">
+    <div class="headerContainer">
+        <ul id="left-nav">
+            <li class="headInfo">Import / Export</li>
+            <li><a id="map" title="{{userName}}'s Location" href="/"></a></li>
+            <li><a id="history" title="History View" href="/"></a></li>
+            <li><a id="friends" title="Friends Locations" href="/"></a></li>
+            <li><a id="settings" title="Admin Settings" href="/admin"></a></li>
+        </ul>
+    </div>
+</div>
+<div class="contentContainer">
+    <div class="content">
+        <div class="info">
+            <h3>Import / Export</h3>
+            Use this page to import or export the location data. (There maybe problems if the import file is larger than
+            1mb zipped)
+        </div>
+        <div class="info">
+            <h3>Import Location File</h3>
+            Please upload a zip file containing Locations.json for Google TakeOut format or Locations.csv for bulkloader
+            CSV format <br/><br/>
+            <form action="{{url}}" method="POST" enctype="multipart/form-data">
+            Upload File: <input type="file" name="file"><br> <input type="submit"
+            name="submit" value="Submit"> </form>
+        </div>
+        <div class="info">
+            <h3> Export Locations</h3>
+            Start a task to get emailed a zip file of your location data.
+            <form action="/exportLocations" method="POST" enctype="multipart/form-data">
+            Output format (Google TakeOut JSON format or bulkloader CSV format):
+            <select name="format">
+              <option value="JSON">JSON</option>
+              <option value="CSV">CSV</option>
+            </select><br/>
+            <input type="submit" name="submit" value="Submit"> </form>
+        </div>
+        <div url="/admin" class="settings">
+            <h3> <img src="images/previous.png">Admin Settings</h3>
+            Return to admin settings
+        </div>
+    </div>
+</div>
+</body>
+</html>

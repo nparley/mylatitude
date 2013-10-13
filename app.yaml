@@ -30,4 +30,4 @@ libraries:
 
 builtins:
 - remote_api: on
-
+- deferred: on
