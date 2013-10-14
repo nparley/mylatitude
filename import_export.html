@@ -27,19 +27,23 @@
         <div class="info">
             <h3>Import / Export</h3>
             Use this page to import or export the location data. (There maybe problems if the import file is larger than
-            1mb zipped)
+            1mb zipped) and both methods will use a lot of database read / writes so might put you close to your limit for
+            the day.
         </div>
         <div class="info">
             <h3>Import Location File</h3>
             Please upload a zip file containing Locations.json for Google TakeOut format or Locations.csv for bulkloader
-            CSV format <br/><br/>
+            CSV format. Each location will use at least one database write, so split large imports over multiply days when
+            using the free account.<br/><br/>
             <form action="{{url}}" method="POST" enctype="multipart/form-data">
             Upload File: <input type="file" name="file"><br> <input type="submit"
             name="submit" value="Submit"> </form>
         </div>
         <div class="info">
             <h3> Export Locations</h3>
-            Start a task to get emailed a zip file of your location data.
+            Start a task to get emailed a zip file of your location data. Each location in your database will cause one read
+            so for large databases consider using bulkloader if you are on the free account. TODO: Add to and form fields
+            to define range for export.<br/><br/>
             <form action="/exportLocations" method="POST" enctype="multipart/form-data">
             Output format (Google TakeOut JSON format or bulkloader CSV format):
             <select name="format">
