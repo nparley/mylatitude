@@ -148,7 +148,7 @@ def emailAfterTask(toEmail,taskName,message,attachment=None):
   @param attachment: Tuple of (attachmentFileName,attachmentData) or None for no attachment
   @return: None
   """
-  sender = "admin@%s" % app_identity.get_default_version_hostname()
+  sender = "admin@%s.appspotmail.com" % app_identity.get_application_id()
   if attachment:
     mail.send_mail(sender=sender,to=toEmail,subject="Task %s Finished" % taskName,body=message,attachments=[attachment])
   else:
