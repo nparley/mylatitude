@@ -83,9 +83,9 @@ def checkOwnerUserDec(forwardURL='/'):
         http = decorator.http()
         user = service.userinfo().get().execute(http=http)
         ownerCheck, userData = checkOwnerUser(user,self.response,forwardURL=forwardURL)
-        userData.auth = user
-        kwargs['userData'] = userData
         if ownerCheck:
+          userData.auth = user
+          kwargs['userData'] = userData
           return func(self, *args, **kwargs)
     return wrapper
   return func_wrapper
