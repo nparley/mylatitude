@@ -4,6 +4,7 @@ import os
 #import urllib
 #import sys
 import datetime
+from functools import wraps
 
 import logging
 logging.getLogger().setLevel(logging.DEBUG)
@@ -68,6 +69,27 @@ def noAccess(user,output,forwardURL='/'):
 #   template_values = {'content':greeting}
 #   output.write(template.render(template_values))
 
+def checkOwnerUserDec(forwardURL='/'):
+  """
+  Decorator for the checkOwnerUser returns f() if user is the owner if not writes out no access
+
+  @param forwardURL: Forwarding URL after sign out
+  @return: f() or not access template, userData which is the result of the datastore get plus userData.auth which is
+  the user dictionary from the oauth profile
+  """
+  def func_wrapper(func):
+    @wraps(func)
+    def wrapper(self, *args, **kwargs):
+        http = decorator.http()
+        user = service.userinfo().get().execute(http=http)
+        ownerCheck, userData = checkOwnerUser(user,self.response,forwardURL=forwardURL)
+        userData.auth = user
+        kwargs['userData'] = userData
+        if ownerCheck:
+          return func(self, *args, **kwargs)
+    return wrapper
+  return func_wrapper
+
 def checkUser(user,output,allowAccess=False,forwardURL='/'):
   """
   Check if the user can view
@@ -108,16 +130,16 @@ def checkOwnerUser(user,output,forwardURL='/'):
     userCheck = Users.get_by_id(user['id'])
     if userCheck:
       if userCheck.owner:
-        return True
+        return True, userCheck
       else:
         noAccess(user,output,forwardURL)
-        return False
+        return False, None
     else:
       noAccess(user,output,forwardURL)
-      return False
+      return False, None
   else:
     noAccess(user,output,forwardURL)
-    return False 
+    return False, None
   
 def json_error(response, code, message):
   """
@@ -343,36 +365,32 @@ class newFriendUrl(webapp2.RequestHandler):
   Creates a new random URL to allow a friend access
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/newfriend'):
-      key = randomKey(15)
-      newURL = FriendUrls(id=key)
-      newURL.keyid = key
-      newURL.put()
-      url = "%s/addviewer/%s" % (self.request.host_url,key)
-      content = 'Send your friend this url:<br/><br/> %s' % url
-      template_values = {'content':content,'header':'New Friend URL','userName': Users.get_by_id(user['id']).name}
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-      self.response.write(template.render(template_values))
+  @checkOwnerUserDec('/newfriend')
+  def get(self,userData):
+    key = randomKey(15)
+    newURL = FriendUrls(id=key)
+    newURL.keyid = key
+    newURL.put()
+    url = "%s/addviewer/%s" % (self.request.host_url,key)
+    content = 'Send your friend this url:<br/><br/> %s' % url
+    template_values = {'content':content,'header':'New Friend URL','userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+    self.response.write(template.render(template_values))
    
 class viewURLs(webapp2.RequestHandler):
   """
   Displays the unused friend URLs
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/viewurls'):
-      currentURLs = FriendUrls.query().fetch(10)
-      content = "These URLs are active to enable friends to view your location: <br/>"
-      for url in currentURLs:
-        content += "<br/>%s/addviewer/%s <br/>" % (self.request.host_url,url.keyid)
-      template_values = {'content':content,'header':'Friend URLs','userName': Users.get_by_id(user['id']).name}
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-      self.response.write(template.render(template_values))
+  @checkOwnerUserDec('/viewurls')
+  def get(self,userData):
+    currentURLs = FriendUrls.query().fetch(10)
+    content = "These URLs are active to enable friends to view your location: <br/>"
+    for url in currentURLs:
+      content += "<br/>%s/addviewer/%s <br/>" % (self.request.host_url,url.keyid)
+    template_values = {'content':content,'header':'Friend URLs','userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+    self.response.write(template.render(template_values))
 
 class addViewer(webapp2.RequestHandler):
   """
@@ -408,65 +426,55 @@ class viewAdmin (webapp2.RequestHandler):
   View the admin settings page for the app
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
-      template_values = {'userName': Users.get_by_id(user['id']).name} 
-      template = JINJA_ENVIRONMENT.get_template('admin.html')
-      self.response.write(template.render(template_values))
-    else:
-      self.abort(403)
+  @checkOwnerUserDec('/admin')
+  def get(self,userData):
+    template_values = {'userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('admin.html')
+    self.response.write(template.render(template_values))
       
 class viewKey (webapp2.RequestHandler):
   """
   Display the backitude key to the user
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
-      try:
-        currentKeys = Keys.query().fetch(1)
-        key = currentKeys[0].keyid
-      except IndexError:
-        content = 'You have no backitude error (Please create a new key'
-        template_values = {'content':content,'userName': Users.get_by_id(user['id']).name,'header':'Missing Key'}
-        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-        self.response.write(template.render(template_values))
-        return
-      content = '%s' % key
-      header = 'Your key is:'
-      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name} 
+  @checkOwnerUserDec('/viewkey')
+  def get(self,userData):
+    try:
+      currentKeys = Keys.query().fetch(1)
+      key = currentKeys[0].keyid
+    except IndexError:
+      content = 'You have no backitude error (Please create a new key)'
+      template_values = {'content':content,'userName': userData.name,'header':'Missing Key'}
       template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
       self.response.write(template.render(template_values))
-    else:
-      self.abort(403)
+      return
+    content = '%s' % key
+    header = 'Your key is:'
+    template_values = {'content':content,'header':header,'userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+    self.response.write(template.render(template_values))
     
 class newKey (webapp2.RequestHandler):
   """
   Create a new backitude key and delete the old one
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/newkey'):
-      try:
-        currentKey = Keys.query().fetch(1)[0]
-        currentKey.key.delete()
-      except IndexError:
-        pass #for some reason the key already got deleted
-      newRandomKey = randomKey(15)
-      newKeyObj = Keys(id=newRandomKey)
-      newKeyObj.keyid = newRandomKey
-      newKeyObj.put()
-      content = '%s' % newRandomKey
-      header = 'Your new key is:'      
-      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name} 
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-      self.response.write(template.render(template_values))
+  @checkOwnerUserDec('/newkey')
+  def get(self,userData):
+    try:
+      currentKey = Keys.query().fetch(1)[0]
+      currentKey.key.delete()
+    except IndexError:
+      pass #for some reason the key already got deleted
+    newRandomKey = randomKey(15)
+    newKeyObj = Keys(id=newRandomKey)
+    newKeyObj.keyid = newRandomKey
+    newKeyObj.put()
+    content = '%s' % newRandomKey
+    header = 'Your new key is:'
+    template_values = {'content':content,'header':header,'userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+    self.response.write(template.render(template_values))
         
 class insertLocation(webapp2.RequestHandler):
   """
@@ -666,19 +674,17 @@ class exportLocations(webapp2.RequestHandler):
       return output.getvalue()
 
   @decorator.oauth_required
-  def post(self):
+  @checkOwnerUserDec('/importExport')
+  def post(self,userData):
     """
     Post method to kick off the export task
     """
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
-      content = 'Task started, you will be emailed with an an attachment when finished'
-      header = 'Export task started'
-      template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
-      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-      deferred.defer(exportLocationsTask,user,self.request.POST['format'])
-      self.response.write(template.render(template_values))
+    content = 'Task started, you will be emailed with an an attachment when finished'
+    header = 'Export task started'
+    template_values = {'content':content,'header':header,'userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+    deferred.defer(exportLocationsTask,userData.auth,self.request.POST['format'])
+    self.response.write(template.render(template_values))
 
 
 def exportLocationsTask(userObj,outputFormat):
@@ -715,14 +721,12 @@ class importExport(webapp2.RequestHandler):
   Get: creates a import / export web page with a link to import and exporting the location data
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
-      upload_url = blobstore.create_upload_url('/importLocations')
-      template_values = {'url':upload_url,'userName': Users.get_by_id(user['id']).name}
-      template = JINJA_ENVIRONMENT.get_template('import_export.html')
-      self.response.write(template.render(template_values))
+  @checkOwnerUserDec('/importExport')
+  def get(self,userData):
+    upload_url = blobstore.create_upload_url('/importlocations')
+    template_values = {'url':upload_url,'userName': userData.name}
+    template = JINJA_ENVIRONMENT.get_template('import_export.html')
+    self.response.write(template.render(template_values))
 
 class importLocation(blobstore_handlers.BlobstoreUploadHandler):
   """
@@ -815,30 +819,28 @@ class importLocation(blobstore_handlers.BlobstoreUploadHandler):
     return new,existing
 
   @decorator.oauth_required
-  def post(self):
+  @checkOwnerUserDec('/importExport')
+  def post(self,userData):
     """
     Post method to kick off the import task
 
     This method will fail if the upload to the blobstore failed
     """
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/importExport'):
-      #noinspection PyBroadException
-      try:
-        upload = self.get_uploads()[0]
-        content = 'File uploaded, you will be sent an email when processing is finish'
-        header = 'File uploaded'
-        template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
-        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-        deferred.defer(importLocationsTask,user,upload.key())
-        self.response.write(template.render(template_values))
-      except:
-        content = 'Error uploading location File'
-        header = 'Error'
-        template_values = {'content':content,'header':header,'userName': Users.get_by_id(user['id']).name}
-        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
-        self.response.write(template.render(template_values))
+    #noinspection PyBroadException
+    try:
+      upload = self.get_uploads()[0]
+      content = 'File uploaded, you will be sent an email when processing is finish'
+      header = 'File uploaded'
+      template_values = {'content':content,'header':header,'userName': userData.name}
+      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      deferred.defer(importLocationsTask,userData.auth,upload.key())
+      self.response.write(template.render(template_values))
+    except:
+      content = 'Error uploading location File'
+      header = 'Error'
+      template_values = {'content':content,'header':header,'userName': userData.name}
+      template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
+      self.response.write(template.render(template_values))
 
 
 def importLocationsTask(userObj,blobKey):
