@@ -702,7 +702,7 @@ def exportLocationsTask(userObj,outputFormat):
     emailAfterTask(userObj['email'],"Export Location",message)
     return
   with io.BytesIO() as output:
-    z = zipfile.ZipFile(output,'w')
+    z = zipfile.ZipFile(output,'w',zipfile.ZIP_DEFLATED)
     if outputFormat == "JSON":
       z.writestr("locations.json",json.dumps(exportLocations.locationsToDict()))
     else:
