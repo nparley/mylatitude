@@ -29,3 +29,7 @@ libraries:
   version: 2.6
 - name: pycrypto
   version: "2.6"  
+
+builtins:
+- remote_api: on
+- deferred: on

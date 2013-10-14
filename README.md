@@ -31,7 +31,9 @@ You need this to uplaod the app to the google app engine servers. You need to do
 
 ## Get a copy of the myLatitude App Code ##
 
-Download the latest zip, or clone the git repo into a directory. In this directory copy your client.secret file you downloaded earlier. 
+Download the latest zip, or clone the git repo into a directory. In this directory copy your client.secret file you downloaded earlier.
+
+Edit the app.yaml file and replace neillatitude with the name of your app under application
 
 For Mac OsX and Windows: load the google app engine launcher. Click on create new application and then fill in the application name and the parent directory. Making sure that Python 2.7 is selected as the runtime. Once created you can test the app by clicking on the run button. Once it is running you can visit http://localhost:8080/ and once you sign in with you google id and give the app permission it should tell you that you don't have permission to access the page. Which is correct as we have not done the setup. But we might as well do that on the remote server so stop the app and click deploy. This will upload the code to the google app engine servers.
 
