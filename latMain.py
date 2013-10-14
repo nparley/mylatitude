@@ -914,7 +914,7 @@ def importLocationsTask(userObj,blobKey):
     emailAfterTask(userObj['email'],"Import Location",message)
     return
 
-  message = "Finished import task and all seems ok\n Imported %d new values and found %d existing values" % \
+  message = "Finished import task and all seems ok\nImported %d new values and found %d existing values" % \
             (new,existing)
   logging.info(message)
   blobstore.delete(blobKey)
