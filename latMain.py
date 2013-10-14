@@ -925,8 +925,8 @@ def importLocationsTask(userObj,blobKey):
 application = webapp2.WSGIApplication(
   [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
    ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
-   ('/admin', viewAdmin), ('/newkey', newKey),('/importExport', importExport),
-   ('/exportLocations', exportLocations),('/importLocations',importLocation),
+   ('/admin', viewAdmin), ('/newkey', newKey),('/importexport', importExport),
+   ('/exportlocations', exportLocations),('/importlocations',importLocation),
    (decorator.callback_path, decorator.callback_handler()),
    webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
 
