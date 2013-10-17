@@ -26,14 +26,14 @@
     <div class="content">
         <div class="info">
             <h3>Import / Export</h3>
-            Use this page to import or export the location data. (There maybe problems if the import file is larger than
-            1mb zipped) and both methods will use a lot of database read / writes so might put you close to your limit for
+            Use this page to import or export your location data. (There maybe problems if the import file is larger than
+            32mb zipped) and both methods will use a lot of database read / writes so might put you close to your limits for
             the day.
         </div>
         <div class="info">
             <h3>Import Location File</h3>
             Please upload a zip file containing Locations.json for Google TakeOut format or Locations.csv for bulkloader
-            CSV format. Each location will use at least one database write, so split large imports over multiply days when
+            CSV format. Each location will use at least one database write, so split large imports over multiple days when
             using the free account.<br/><br/>
             <form action="{{url}}" method="POST" enctype="multipart/form-data">
             Upload File: <input type="file" name="file"><br> <input type="submit"
@@ -42,8 +42,8 @@
         <div class="info">
             <h3> Export Locations</h3>
             Start a task to get emailed a zip file of your location data. Each location in your database will cause one read
-            so for large databases consider using bulkloader if you are on the free account. TODO: Add to and form fields
-            to define range for export.<br/><br/>
+            so for large databases consider using bulkloader if you are on the free account. (TODO: Add to and form fields
+            to define range for export.)<br/><br/>
             <form action="/exportlocations" method="POST" enctype="multipart/form-data">
             Output format (Google TakeOut JSON format or bulkloader CSV format):
             <select name="format">
