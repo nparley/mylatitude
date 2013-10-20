@@ -14,7 +14,7 @@ function userAuthed() {
         gapi.client.oauth2.userinfo.get().execute(function (resp) { // Check the token by calling userinfo, if it's ok call our end point
             if (!resp.code) {
                 var token = gapi.auth.getToken();
-                gapi.client.mylatitude.location.last().execute(function (resp) { // this does not do anything yet it's just a test.
+                gapi.client.mylatitude.locations.latest().execute(function (resp) { // this does not do anything yet it's just a test.
 //                    console.log(resp);
                 });
             }
