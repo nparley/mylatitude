@@ -204,6 +204,16 @@ class Users(ndb.Model):
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
 
+class TimeZones(ndb.Model):
+  """
+  Database TimeZone Class: for storing the Timezone for a day
+  """
+  day = ndb.DateProperty()
+  dstOffset = ndb.IntegerProperty()
+  rawOffset = ndb.IntegerProperty()
+  timeZoneId = ndb.StringProperty()
+  timeZoneName = ndb.StringProperty()
+
 class Keys(ndb.Model):
   """
   Database Keys Class: holds the backitude access key
