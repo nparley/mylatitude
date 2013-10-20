@@ -17,7 +17,7 @@ function initialize() {
     });
 
     function updateLocation(location,userName,userPic) {
-        if (location.timeStamp > 0) {
+        if (location.timeStampMs > 0) {
             var center = new google.maps.LatLng(location.latitude, location.longitude);
             infoWindow.close();
             //noinspection JSValidateTypes
@@ -42,7 +42,7 @@ function initialize() {
                 fillOpacity: 0.8,
                 map: map
             });
-            var d = new Date(location.timeStamp);
+            var d = new Date(parseInt(location.timeStampMs));
             var dNow = new Date();
             var diff = dNow.getTime() - d.getTime();
             diff /= 60000;
@@ -57,7 +57,8 @@ function initialize() {
             var updateString = "<img src='" +userPic+"' height='50' width='50' " +
                 "style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> " +
                 "<strong>"+userName+"'s location </strong><br/>";
-            updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + "," + location.longitude + "'> Directions Link</a><br/>";
+            updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + ","
+                + location.longitude + "'> Directions Link</a><br/>";
             updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
             updateString += "at: " + d.toTimeString() + "<br/>";
             updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";
