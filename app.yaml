@@ -28,7 +28,9 @@ libraries:
 - name: jinja2
   version: 2.6
 - name: pycrypto
-  version: "2.6"  
+  version: "2.6"
+- name: endpoints
+  version: "1.0"
 
 builtins:
 - remote_api: on
