@@ -273,10 +273,10 @@ class MainPage(webapp2.RequestHandler):
         longitude = location.longitudeE7 / 1E7
         accuracy = location.accuracy
         locationArray.append(
-          {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy, 'timeStamp': float(timeStamp)})
+          {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy, 'timeStampMs': str(timeStamp)})
       
       if len(locationArray) == 0: # Default to Edinburgh Castle
-        locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStamp':0}) 
+        locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStampMs':str(0)})
       
       clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
       apiRoot = "%s/_ah/api" % self.request.host_url  
