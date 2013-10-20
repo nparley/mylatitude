@@ -1,20 +1,20 @@
+import os
+import datetime
+import logging
+import calendar
+import json
+from functools import wraps
+
+logging.getLogger().setLevel(logging.DEBUG)
+
 import endpoints
 from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
 from google.appengine.api import urlfetch
-from functools import wraps
-import os
+
 import auth_util
-import datetime
-import logging
-import calendar
-import json
-
-logging.getLogger().setLevel(logging.DEBUG)
-
 from latMain import Users, Location, TimeZones
-
 import oauth2client.clientsecrets
 
 clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
