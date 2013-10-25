@@ -662,7 +662,7 @@
 							borderRightWidth: (row > 0 || (!row && col == 6)) ? borderSize : 0,
 							marginLeft: (col > 0) ? '-' + (borderSize) : 0,
 							marginTop: (row > 0) ? '-' + (borderSize) : 0,
-							zIndex: cellZIndex
+//							zIndex: cellZIndex
 						});
 
 						// Assign other properties to the cell

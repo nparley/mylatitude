@@ -118,7 +118,7 @@
 .gldp-flatwhite .selected {
 	color: #fff;
 	font-weight: 500;
-	border-color: #888;
+	/*border-color: #888;*/
 	background: #aaa;
 }
 
@@ -126,7 +126,7 @@
 .gldp-flatwhite .today {
 	color: #fff;
 	font-weight: 500;
-	border-color: rgba(72, 74, 111, 0.9);
+	/*border-color: rgba(72, 74, 111, 0.9);*/
 	background: rgba(72, 74, 111, 0.9);
 }
 
