@@ -193,13 +193,13 @@ class LocationsEndPoint(remote.Service):
         if new_timezone_obj:
             return new_timezone_obj
         # + order = smallest first, - order = largest first
-        before_midday_qry = Location.query(Location.timestampMs >= day_ts_ms - MILLIS_PER_12HOURS,
+        before_midday_qry = Location.query(Location.timestampMs >= day_ts_ms - MILLIS_PER_24HOURS,
                                            Location.timestampMs <= day_ts_ms).order(-Location.timestampMs)
         before_midday_fut = before_midday_qry.fetch_async(1)
 
         after_midday_qry = Location.query(Location.timestampMs > day_ts_ms,
                                           Location.timestampMs <= day_ts_ms +
-                                          MILLIS_PER_12HOURS).order(Location.timestampMs)
+                                          MILLIS_PER_24HOURS).order(Location.timestampMs)
         after_midday_fut = after_midday_qry.fetch_async(1)
 
         try:
