@@ -210,11 +210,15 @@ class Users(ndb.Model):
     """
     Database Users Class: for storing allowed users
     """
-    userid = ndb.StringProperty()
-    owner = ndb.BooleanProperty()
-    name = ndb.StringProperty()
-    picture = ndb.StringProperty()
-
+    userid = ndb.StringProperty(required=True)
+    owner = ndb.BooleanProperty(required=True)
+    name = ndb.StringProperty(required=True)
+    picture = ndb.StringProperty(default="/images/blank.jpg")
+    email = ndb.StringProperty(required=True)
+    clientid = ndb.StringProperty(default="")
+    appURL = ndb.StringProperty(default="")
+    allowApp = ndb.BooleanProperty(default=False)
+    expires = ndb.IntegerProperty(default=0)
 
 class TimeZones(ndb.Model):
     """
