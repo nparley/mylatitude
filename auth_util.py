@@ -17,7 +17,9 @@ from google.appengine.api import urlfetch
 import endpoints
 from endpoints import users_id_token
 from endpoints.users_id_token  import _TOKENINFO_URL
+import logging
 
+logging.getLogger().setLevel(logging.DEBUG)
 
 _SAVED_TOKEN_DICT = {}
 TOKENINFO_URL_PREFIX = _TOKENINFO_URL + '?access_token='
@@ -168,3 +170,10 @@ def _get_user_id_from_bearer_token(token):
       return user_info.get('user_id')
     except:
       pass
+
+
+def replace_is_local_dev():
+    logging.info("Force token use")
+    return True
+
+users_id_token._is_local_dev = replace_is_local_dev
