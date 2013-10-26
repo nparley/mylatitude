@@ -436,13 +436,11 @@ class viewHistory (webapp2.RequestHandler):
   View the history page for the app
   """
   @decorator.oauth_required
-  def get(self):
-    http = decorator.http()
-    user = service.userinfo().get().execute(http=http)
-    if checkOwnerUser(user,self.response,forwardURL='/viewkey'):
+  @checkOwnerUserDec('/history')
+  def get(self,userData):
       clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
       apiRoot = "%s/_ah/api" % self.request.host_url
-      template_values = {'userName': Users.get_by_id(user['id']).name, 'clientID': clientObj[1]['client_id'],
+      template_values = {'userName': userData.name, 'clientID': clientObj[1]['client_id'],
                          'apiRoot': apiRoot}
       template = JINJA_ENVIRONMENT.get_template('history.html')
       self.response.write(template.render(template_values))
