@@ -13,21 +13,16 @@
         var locations = {{locations}};
         var userName = "{{userName}}";
         var userPic = "{{ownerPic}}";
-        function loadBackEnd() { // Callback from google's client library loading
-            var apisToLoad;
-            var callback = function () {
-                if (--apisToLoad == 0) {
-                    signin(true, userAuthed, "{{clientID}}"); // only called once both APIs are loaded
-                }
-            };
-            apisToLoad = 2; // must match number of calls to gapi.client.load()
-            gapi.client.load('mylatitude', 'v1', callback, '{{apiRoot}}');
-            gapi.client.load('oauth2', 'v2', callback);
+        function endpointStart(){
+            var clientID = "{{clientID}}";
+            var apiRoot = "{{apiRoot}}";
+            myLatitude.endpoints.loadBackEnd(clientID,apiRoot,myLatitude.endpoints.userAuthed);
         }
+
     </script>
     <script src="/js/map.js"></script>
     <script src="/js/endpoints.js"></script>
-    <script src="https://apis.google.com/js/client.js?onload=loadBackEnd"></script>
+    <script src="https://apis.google.com/js/client.js?onload=endpointStart"></script>
 </head>
 <body>
 <div class="header">
