@@ -384,6 +384,7 @@ class SetupOwner(webapp2.RequestHandler):
                 admin_user.picture = user['picture']
             except KeyError:
                 admin_user.picture = '/images/blank.jpg'
+            admin_user.email = user['email']
             admin_user.put()
             gmaps = Maps()
             gmaps.keyid = map_key
@@ -456,6 +457,7 @@ class AddViewer(webapp2.RequestHandler):
                     new_user.userid = user['id']
                     new_user.owner = False
                     new_user.name = user['given_name']
+                    new_user.email = user['email']
                     try:  # Not all users have pictures so sent the picture to blank if it is missing
                         new_user.picture = user['picture']
                     except KeyError:
