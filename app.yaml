@@ -10,6 +10,8 @@ handlers:
   upload: images/favicon.ico
 - url: /stylesheets
   static_dir: stylesheets
+- url: /glDatePicker
+  static_dir: glDatePicker
 - url: /images
   static_dir: images
 - url: /js
@@ -26,7 +28,9 @@ libraries:
 - name: jinja2
   version: 2.6
 - name: pycrypto
-  version: "2.6"  
+  version: "2.6"
+- name: endpoints
+  version: "1.0"
 
 builtins:
 - remote_api: on

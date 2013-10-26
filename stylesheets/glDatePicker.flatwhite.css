@@ -1,0 +1,154 @@
+.gldp-flatwhite {
+	position: absolute;
+	font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    width: 300px;
+    height: 250px;
+    bottom: 65px;
+    left: 50%;
+    position: absolute;
+    margin-left: -150px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+}
+
+/* Core style for every cell */
+.gldp-flatwhite .core {
+	box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	position: relative;
+	float: left;
+	padding: 0;
+	margin: 0;
+	font-size: 14px;
+	text-align: center;
+	cursor: pointer;
+	background: rgba(255, 255, 255, 0.90);
+}
+
+/* Cell border */
+.gldp-flatwhite .border {
+	border-style: solid;
+	border-width: 0;
+	border-color: rgba(255, 255, 255, 0.90);
+}
+
+/* Month/Year text and select */
+.gldp-flatwhite .monyear,
+.gldp-flatwhite .monyear select {
+	font-size: 16px !important;
+	font-weight: 500;
+	background: rgba(238, 238, 238, 0.90);
+}
+
+/* Month/Year text */
+.gldp-flatwhite .monyear span {
+	margin: 0 5px 0 5px;
+}
+
+/* Prev/Next arrows */
+.gldp-flatwhite .prev-arrow{
+    background: url("/images/previousSmall.png") no-repeat center center;
+    height:32px;
+    width: 32px;
+    display: inline-block;
+}
+.gldp-flatwhite .next-arrow {
+    background: url("/images/nextSmall.png") no-repeat center center;
+    height:32px;
+    width: 32px;
+    display: inline-block;
+}
+
+.no-touch .gldp-flatwhite .prev-arrow:hover{
+    background: url("/images/previousOverSmall.png") no-repeat center center;
+}
+.no-touch .gldp-flatwhite .next-arrow:hover {
+    background: url("/images/nextOverSmall.png") no-repeat center center;
+}
+
+
+.gldp-flatwhite .prev-arrow:active,
+.gldp-flatwhite .next-arrow:active {
+	color: #000;
+}
+
+.gldp-flatwhite .prev-arrow-off,
+.gldp-flatwhite .next-arrow-off {
+	color: #000;
+	opacity: 0.15;
+}
+
+/* Days of the week */
+.gldp-flatwhite .dow {
+	color: #222;
+	font-weight: 500;
+	cursor: default !important;
+	background: #eee;
+}
+
+/* Weekdays */
+.gldp-flatwhite .mon,
+.gldp-flatwhite .tue,
+.gldp-flatwhite .wed,
+.gldp-flatwhite .thu,
+.gldp-flatwhite .fri {
+	font-weight: 500;
+}
+
+/* Weekend days */
+.gldp-flatwhite .sat,
+.gldp-flatwhite .sun {
+	color: #888;
+	font-weight: 500;
+}
+
+/* Selectable days that are outside of current month being shown */
+.gldp-flatwhite .outday {
+	color: #aaa !important;
+}
+
+/* Hover */
+.gldp-flatwhite .mon:hover,
+.gldp-flatwhite .tue:hover,
+.gldp-flatwhite .wed:hover,
+.gldp-flatwhite .thu:hover,
+.gldp-flatwhite .fri:hover,
+.gldp-flatwhite .sat:hover,
+.gldp-flatwhite .sun:hover {
+	background: #eee;
+}
+
+/* Non-Selectable days */
+.gldp-flatwhite .noday {
+	color: #bbb;
+	font-weight: 300;
+	cursor: wait !important;
+	background: #ddd;
+}
+
+/* Currently selected day */
+.gldp-flatwhite .selected {
+	color: #fff;
+	font-weight: 500;
+	/*border-color: #888;*/
+	background: #aaa;
+}
+
+/* Today */
+.gldp-flatwhite .today {
+	color: #fff;
+	font-weight: 500;
+	/*border-color: rgba(72, 74, 111, 0.9);*/
+	background: rgba(72, 74, 111, 0.9);
+}
+
+/* Special */
+.gldp-flatwhite .special {
+	color: #fff;
+	font-weight: 500;
+	border-color: rgba(72, 74, 111, 0.9);
+	background: rgba(72, 74, 111, 0.9);
+}

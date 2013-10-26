@@ -1,27 +1,6 @@
 /**
  * Created by Neil on 29/09/13.
  */
-
-function signin(mode, callback,clientID) { // clientID filled in by template, immediate = true because we should not need to ask permission again
-    gapi.auth.authorize({client_id: clientID,
-            scope: ["https://www.googleapis.com/auth/userinfo.email", "https://www.googleapis.com/auth/userinfo.profile"], immediate: true,
-            response_type: 'token'}, // Can't use id tokens as we can't get the user if from an id token
-        callback);
-}
-
-function userAuthed() {
-
-    var request =
-        gapi.client.oauth2.userinfo.get().execute(function (resp) { // Check the token by calling userinfo, if it's ok call our end point
-            if (!resp.code) {
-                var token = gapi.auth.getToken();
-                gapi.client.mylatitude.location.last().execute(function (resp) { // this does not do anything yet it's just a test.
-//                    console.log(resp);
-                });
-            }
-        });
-}
-
 function initialize() {
     var mapOptions = {
         zoom: 16,
@@ -38,7 +17,7 @@ function initialize() {
     });
 
     function updateLocation(location,userName,userPic) {
-        if (location.timeStamp > 0) {
+        if (location.timeStampMs > 0) {
             var center = new google.maps.LatLng(location.latitude, location.longitude);
             infoWindow.close();
             //noinspection JSValidateTypes
@@ -63,7 +42,7 @@ function initialize() {
                 fillOpacity: 0.8,
                 map: map
             });
-            var d = new Date(location.timeStamp);
+            var d = new Date(parseInt(location.timeStampMs));
             var dNow = new Date();
             var diff = dNow.getTime() - d.getTime();
             diff /= 60000;
@@ -78,7 +57,8 @@ function initialize() {
             var updateString = "<img src='" +userPic+"' height='50' width='50' " +
                 "style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> " +
                 "<strong>"+userName+"'s location </strong><br/>";
-            updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + "," + location.longitude + "'> Directions Link</a><br/>";
+            updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + ","
+                + location.longitude + "'> Directions Link</a><br/>";
             updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
             updateString += "at: " + d.toTimeString() + "<br/>";
             updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";

@@ -204,6 +204,16 @@ class Users(ndb.Model):
   name = ndb.StringProperty()
   picture = ndb.StringProperty()
 
+class TimeZones(ndb.Model):
+  """
+  Database TimeZone Class: for storing the Timezone for a day
+  """
+  day = ndb.DateProperty()
+  dstOffset = ndb.IntegerProperty()
+  rawOffset = ndb.IntegerProperty()
+  timeZoneId = ndb.StringProperty()
+  timeZoneName = ndb.StringProperty()
+
 class Keys(ndb.Model):
   """
   Database Keys Class: holds the backitude access key
@@ -263,10 +273,10 @@ class MainPage(webapp2.RequestHandler):
         longitude = location.longitudeE7 / 1E7
         accuracy = location.accuracy
         locationArray.append(
-          {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy, 'timeStamp': float(timeStamp)})
+          {'latitude': latitude, 'longitude': longitude, 'accuracy': accuracy, 'timeStampMs': str(timeStamp)})
       
       if len(locationArray) == 0: # Default to Edinburgh Castle
-        locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStamp':0}) 
+        locationArray.append({'latitude':55.948346,'longitude':-3.198119,'accuracy':0,'timeStampMs':str(0)})
       
       clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
       apiRoot = "%s/_ah/api" % self.request.host_url  
@@ -420,6 +430,20 @@ class addViewer(webapp2.RequestHandler):
         return self.redirect('/')
     else:
       self.abort(403)
+
+class viewHistory (webapp2.RequestHandler):
+  """
+  View the history page for the app
+  """
+  @decorator.oauth_required
+  @checkOwnerUserDec('/history')
+  def get(self,userData):
+      clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
+      apiRoot = "%s/_ah/api" % self.request.host_url
+      template_values = {'userName': userData.name, 'clientID': clientObj[1]['client_id'],
+                         'apiRoot': apiRoot}
+      template = JINJA_ENVIRONMENT.get_template('history.html')
+      self.response.write(template.render(template_values))
 
 class viewAdmin (webapp2.RequestHandler):
   """
@@ -927,7 +951,7 @@ def importLocationsTask(userObj,blobKey):
 application = webapp2.WSGIApplication(
   [('/', MainPage), ('/insert', insertLocation), ('/backitude', insertBack), ('/setup', setupOwner),
    ('/viewkey', viewKey), ('/newfriend', newFriendUrl), ('/viewurls', viewURLs), #('/test',oauthTest),
-   ('/admin', viewAdmin), ('/newkey', newKey),('/importexport', importExport),
+   ('/admin', viewAdmin), ('/newkey', newKey),('/importexport', importExport),('/history', viewHistory),
    ('/exportlocations', exportLocations),('/importlocations',importLocation),
    (decorator.callback_path, decorator.callback_handler()),
    webapp2.Route('/addviewer/<key>', handler=addViewer, name='addviewer')], debug=True)
