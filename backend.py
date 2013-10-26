@@ -292,9 +292,8 @@ class LocationsEndPoint(remote.Service):
             raise endpoints.BadRequestException('Not a correct date')
 
         timezone = self.get_time_zone(history_date, history_date_ts_ms)
-        history_date_ts_ms += (timezone.dstOffset * 1000)
-        history_date_ts_ms += (timezone.rawOffset * 1000)
-
+        history_date_ts_ms -= (timezone.dstOffset * 1000)
+        history_date_ts_ms -= (timezone.rawOffset * 1000)
         qry = Location.query(Location.timestampMs >= history_date_ts_ms - MILLIS_PER_12HOURS,
                              Location.timestampMs <= history_date_ts_ms
                              + MILLIS_PER_12HOURS).order(-Location.timestampMs)
