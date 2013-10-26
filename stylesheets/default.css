@@ -75,7 +75,7 @@ div.historyCalMax {
     vertical-align: top;
 }
 
-div.historyCalMin:hover {
+.no-touch div.historyCalMin:hover {
     background-image: url("/images/upOver.png");
 }
 
@@ -123,13 +123,13 @@ div.historyDate > ul > li.icons {
 div.historyDate > ul > li.icons#next {
     background-image: url("/images/next.png");
 }
-div.historyDate > ul > li.icons#next:hover {
+.no-touch div.historyDate > ul > li.icons#next:hover {
     background-image: url("/images/nextOver.png");
 }
 div.historyDate > ul > li.icons#previous {
     background-image: url("/images/previous.png");
 }
-div.historyDate > ul > li.icons#previous:hover {
+.no-touch div.historyDate > ul > li.icons#previous:hover {
     background-image: url("/images/previousOver.png");
 }
 div.historyDate > ul > li#currentDate {
