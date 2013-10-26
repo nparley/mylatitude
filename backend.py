@@ -3,6 +3,7 @@ import datetime
 import logging
 import calendar
 import json
+
 from functools import wraps
 
 logging.getLogger().setLevel(logging.DEBUG)
@@ -19,6 +20,7 @@ import oauth2client.clientsecrets
 
 clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
 ALLOWED_CLIENT_IDS = [clientObj[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
+SCOPES = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']
 
 
 def user_required(user_test_function):
@@ -137,6 +139,7 @@ myLatAPI = endpoints.api(name='mylatitude', version='v1', description='Rest API 
 @myLatAPI.api_class(resource_name='locations', path='locations')
 class LocationsEndPoint(remote.Service):
     """ Endpoints for location services of the API """
+
     @staticmethod
     def create_location_message(location_obj):
         """ Create a location message from a location database object
@@ -251,7 +254,8 @@ class LocationsEndPoint(remote.Service):
             return new_timezone_obj
 
     #noinspection PyUnusedLocal
-    @endpoints.method(message_types.VoidMessage, SingleLocationMessage, name='latest', path='latest', http_method='GET')
+    @endpoints.method(message_types.VoidMessage, SingleLocationMessage, name='latest', path='latest', http_method='GET',
+                      scopes=SCOPES)
     @user_required(any_user)
     def get_latest_location(self, not_used_request):
         """ Endpoint method which returns the latest location from the database
@@ -268,7 +272,7 @@ class LocationsEndPoint(remote.Service):
         return SingleLocationMessage(location=location)
 
     @endpoints.method(DATE_RESOURCE_CONTAINER, DateLocationsMessage,
-                      name='history', path='history/{year}/{month}/{day}', http_method='GET')
+                      name='history', path='history/{year}/{month}/{day}', http_method='GET', scopes=SCOPES)
     @user_required(owner_user)
     def get_dates_locations(self, request):
         """ Endpoint method which returns the locations for a date supplied, along with timezone
