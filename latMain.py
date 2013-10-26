@@ -349,6 +349,7 @@ class SetupOwner(webapp2.RequestHandler):
             form_key_check = SetupFormKey.get_by_id(self.request.POST['form_key'])
             if not form_key_check:
                 raise KeyError
+            form_key_check.key.delete()
         except KeyError:
             self.abort(401)
         number_of_users = Users.query().count()
