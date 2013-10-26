@@ -584,7 +584,7 @@ class InsertLocation(webapp2.RequestHandler):
             return
 
         response = {'data': new_location.to_dict()}
-        self.response.set_status(200)
+        self.response.set_status(201)
         self.response.out.write(json.dumps(response))
 
 
