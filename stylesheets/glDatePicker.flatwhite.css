@@ -49,11 +49,26 @@
 }
 
 /* Prev/Next arrows */
-.gldp-flatwhite .prev-arrow,
-.gldp-flatwhite .next-arrow {
-	color: #666;
-	text-shadow: 1px 1px 0 rgba(255, 255, 255, 0.75);
+.gldp-flatwhite .prev-arrow{
+    background: url("/images/previousSmall.png") no-repeat center center;
+    height:32px;
+    width: 32px;
+    display: inline-block;
 }
+.gldp-flatwhite .next-arrow {
+    background: url("/images/nextSmall.png") no-repeat center center;
+    height:32px;
+    width: 32px;
+    display: inline-block;
+}
+
+.no-touch .gldp-flatwhite .prev-arrow:hover{
+    background: url("/images/previousOverSmall.png") no-repeat center center;
+}
+.no-touch .gldp-flatwhite .next-arrow:hover {
+    background: url("/images/nextOverSmall.png") no-repeat center center;
+}
+
 
 .gldp-flatwhite .prev-arrow:active,
 .gldp-flatwhite .next-arrow:active {

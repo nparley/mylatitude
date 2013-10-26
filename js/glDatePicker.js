@@ -65,8 +65,8 @@
 
 		// Arrows used for the Previous and Next month buttons on the title.
 		// Set these to blank to hide the arrows completely.
-		prevArrow: '\u25c4',
-		nextArrow: '\u25ba',
+		prevArrow: ' ',
+		nextArrow: ' ',
 
 		// A collection of dates that can be selectable by the user.
 		// The dates can be a one-time selection or made repeatable by setting
