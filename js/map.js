@@ -54,13 +54,21 @@ function initialize() {
             diff = Math.round(diff);
             //noinspection JSValidateTypes
             infoWindow.setPosition(center);
-            var updateString = "<img src='" +userPic+"' height='50' width='50' " +
-                "style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> " +
-                "<strong>"+userName+"'s location </strong><br/>";
-            updateString += "<a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + ","
+            var updateString = "<strong>"+userName+"'s location </strong>";
+            updateString += "<img src='" +userPic+"' height='50' width='50' " +
+                "style='float:right;border-width:1px;border-style:solid;border-color:#A5A5A5;'> ";
+            updateString += "<br/><a href='http://maps.google.com/maps?saddr=&daddr=" + location.latitude + ","
                 + location.longitude + "'> Directions Link</a><br/>";
             updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
-            updateString += "at: " + d.toTimeString() + "<br/>";
+
+            var atTime = d.toTimeString();
+            var atTimeArray = atTime.split("(");
+            updateString += "at: " + atTimeArray[0] + "<br/>";
+
+            if (atTimeArray[1]){
+                updateString += "(" + atTimeArray[1] + "<br/>";
+            }
+
             updateString += diff + " " + diffText + " ago <br/><span style=\"font-size:10%\">&nbsp;</span> ";
 
             var div = document.createElement('div');
