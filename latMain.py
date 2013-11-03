@@ -220,6 +220,7 @@ class Users(ndb.Model):
     allowApp = ndb.BooleanProperty(default=False)
     expires = ndb.IntegerProperty(default=0)
 
+
 class TimeZones(ndb.Model):
     """
     Database TimeZone Class: for storing the Timezone for a day
@@ -260,6 +261,21 @@ class SetupFormKey(ndb.Model):
 #      me = service.userinfo().get().execute(http=http)
 #      #info = {"name":me['displayName'],"id":me['userID']}
 #      self.response.write(me)
+
+
+class SignOut(webapp2.RequestHandler):
+    """
+    Sign the user out of their Google account for the app
+    """
+    def get(self):
+        if users.get_current_user():
+            sign_out_url = users.create_logout_url('/signout')
+            return self.redirect(sign_out_url)
+        else:
+            template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+            content = 'You are no longer signed in'
+            template_values = {'content': content, 'header': 'Signed Out'}
+            self.response.write(template.render(template_values))
 
 
 class MainPage(webapp2.RequestHandler):
@@ -1004,6 +1020,7 @@ application = webapp2.WSGIApplication(
     [('/', MainPage), ('/insert', InsertLocation), ('/backitude', InsertBack), ('/setup', SetupOwner),
      ('/viewkey', ViewKey), ('/newfriend', NewFriendUrl), ('/viewurls', ViewURLs),  # ('/test',oauthTest),
      ('/admin', ViewAdmin), ('/newkey', NewKey), ('/importexport', ImportExport), ('/history', ViewHistory),
+     ('/signout', SignOut),
      ('/exportlocations', ExportLocations), ('/importlocations', ImportLocation),
      (decorator.callback_path, decorator.callback_handler()),
      webapp2.Route('/addviewer/<key>', handler=AddViewer, name='addviewer')], debug=True)

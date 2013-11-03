@@ -2,13 +2,14 @@
 	position: absolute;
 	font-family: 'Roboto', sans-serif;
     font-weight: 300;
-    width: 300px;
+    width: 301px;
     height: 250px;
     bottom: 65px;
     left: 50%;
     position: absolute;
-    margin-left: -150px;
+    margin-left: -151px;
     color: rgba(96, 96, 96, 0.91);
+    box-shadow: 0 0 5px #888;
     -moz-box-shadow: 0 0 5px #888;
     -webkit-box-shadow: 0 0 5px #888;
 }
