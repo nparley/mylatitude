@@ -4,3 +4,4 @@ client_secrets.json
 .metadata/
 .pydevproject
 .project
+.idea/

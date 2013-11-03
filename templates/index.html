@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>{{userName}}'s Latitude</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link href='//fonts.googleapis.com/css?family=Roboto:500,400,300' rel='stylesheet' type='text/css'>
+    <link href="/stylesheets/default.css" rel="stylesheet">
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key={{key}}&sensor=false"></script>
+    <script>
+        //noinspection UnterminatedStatementJS
+        var locations = {{locations}};
+        var userName = "{{userName}}";
+        var userPic = "{{ownerPic}}";
+        function endpointStart(){
+            var clientID = "{{clientID}}";
+            var apiRoot = "{{apiRoot}}";
+            myLatitude.endpoints.loadBackEnd(clientID,apiRoot,myLatitude.endpoints.userAuthed);
+        }
+
+    </script>
+    <script src="/js/map.js"></script>
+    <script src="/js/endpoints.js"></script>
+    <script src="https://apis.google.com/js/client.js?onload=endpointStart"></script>
+</head>
+<body>
+<div class="header">
+    <div class="headerContainer">
+        <ul id="left-nav">
+            <li class="headInfo">{{userName}}'s Location</li>
+            <li><a id="map" title="{{userName}}'s Location" href="/"></a></li>
+            {% if owner==true %}
+            <li><a id="history" title="History View" href="/history"></a></li>
+            <li><a id="friends" title="Friends Locations" href="/"></a></li>
+            <li><a id="settings" title="Admin Settings" href="/admin"></a></li>
+            {% endif %}
+            <li><a id="overflow" title="Settings" href="/"></a></li>
+        </ul>
+    </div>
+</div>
+<div class="map_container">
+    <div id="map_canvas"></div>
+</div>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html class="no-js">
+<head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>{{userName}}'s Latitude (History)</title>
+    <link href='//fonts.googleapis.com/css?family=Roboto:500,400,300' rel='stylesheet' type='text/css'>
+    <link href="/stylesheets/default.css" rel="stylesheet">
+    <link href="/stylesheets/glDatePicker.flatwhite.css" rel="stylesheet" type="text/css">
+    <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&key={{key}}&sensor=false"></script>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="/js/modernizr.js"></script>
+    <script src="/js/glDatePicker.js"></script>
+    <script>
+        //noinspection UnterminatedStatementJS
+        var userName = "{{userName}}";
+        function endpointStart(){
+            var clientID = "{{clientID}}";
+            var apiRoot = "{{apiRoot}}";
+            myLatitude.endpoints.loadBackEnd(clientID,apiRoot,apiLoad);
+        }
+    </script>
+    <script src="/js/historyMap.js"></script>
+    <script src="/js/endpoints.js"></script>
+    <script src="https://apis.google.com/js/client.js?onload=endpointStart"></script>
+</head>
+<body>
+
+<div class="header">
+    <div class="headerContainer">
+        <ul id="left-nav">
+            <li class="headInfo">Location History</li>
+            <li><a id="map" title="{{userName}}'s Location" href="/"></a></li>
+            <li><a id="history" title="History View" href="/history"></a></li>
+            <li><a id="friends" title="Friends Locations" href="/"></a></li>
+            <li><a id="settings" title="Admin Settings" href="/admin"></a></li>
+            <li><a id="overflow" title="Settings" href="/"></a></li>
+        </ul>
+    </div>
+</div>
+<div class="map_container">
+    <div id="map_canvas"></div>
+    <input type="text" id="histDate" gldp-id="histCal"  />
+        <div id="histCal" gldp-el="histCal" style="width:302px; height:251px; ">
+        </div>
+
+    <div class="historyCalMin" title="Show Calendar"></div>
+    <div class="historyDate"><ul>
+        <li class="icons" id="previous" title="Previous"></li>
+        <li id="currentDate">01 January 2013</li>
+        <li class="icons" id="next" title="Next"></li></ul>
+    </div>
+    <div id="apiAccess">Click to login to API</div>
+    <div id="noLocationData">No location data for date</div>
+    <div id="loading"><div id="loaderImage"></div></div>
+</div>
+</body>
+</html>

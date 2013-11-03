@@ -1,132 +1,399 @@
 html, body {
-	height: 100%;
-	margin: 0;
-	padding: 0;
-	font-size:100%;
+    height: 100%;
+    margin: 0;
+    padding: 0;
+    font-family: 'Roboto', sans-serif;
+    font-weight: 300;
+    font-size: 15px;
+}
+strong, b {
+    font-weight: 500;
+}
+h3 {
+    color: rgba(72, 74, 111, 1);
+    font-size: 16px;
+    font-weight: 500;
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+
+h3 > img {
+    display: inline-block;
+    vertical-align: middle;
 }
 
 #map_canvas {
- 	z-index: 0;
-	width: 100%;
-	height: 100%;
-	position: absolute;
-	overflow: hidden;
+    z-index: 0;
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    overflow: hidden;
 }
 
 .infoWin {
-	height: 120px;
-	width: 260px;	
-}
-.map_container {
-	position: fixed;
-	top: 50px;
-	right: 0;
-	left: 0;
-	bottom: 0;
+    height: 140px;
+    width: 170px;
 }
 
-div.header>div>ul>li>a {
-	padding: 0 10px;
-	color: #eeeeee;
-	line-height: 49px;
-	font-weight: 300;
-	text-shadow: 0 -1px 0 rgba(0,0,0,0.25);
-	display: block;
-	text-decoration: none;
+.map_container {
+    position: absolute;
+    top: 50px;
+    width: 100%;
+    right: 0;
+    left: 0;
+    bottom: 0;
+}
+
+#loading {
+    position: absolute;
+    top: 0;
+    width: 100%;
+    right: 0;
+    left: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.70);
+}
+#loaderImage {
+    position:absolute;
+    top:50%;
+    left: 50%;
+    margin-left: -64px;
+    margin-top: -64px;
+}
+
+#apiAccess {
+    position:absolute;
+    top:50%;
+    left: 50%;
+    margin-left: -151px;
+    margin-top: -25px;
+    width: 302px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.80);
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 50px;
+    text-align: center;
+    display:none;
+    cursor: pointer;
+}
+
+#apiAccess:hover {
+    background: rgba(206, 217, 255, 0.80);
+}
+
+#noLocationData {
+    position:absolute;
+    top:10px;
+    left: 50%;
+    margin-left: -151px;
+    width: 302px;
+    height: 50px;
+    background: rgba(255, 255, 255, 0.80);
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    font-size: 20px;
+    font-weight: 400;
+    line-height: 50px;
+    text-align: center;
+    display:none;
+}
+
+div.historyCalMin {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    height: 32px;
+    width: 32px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -16px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    display: inline-block;
+    background-image: url("/images/up.png");
+    cursor: pointer;
+}
+
+div.historyCalMax {
+    position: absolute;
+    bottom: 65px;
+    left: 50%;
+    height: 250px;
+    width: 302px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -151px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    vertical-align: top;
+}
+
+.no-touch div.historyCalMin:hover {
+    background-image: url("/images/upOver.png");
+}
+
+.historyDate {
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    height: 50px;
+    width: 302px;
+    background: rgba(255, 255, 255, 0.80);
+    margin-left: -151px;
+    font-size: 20px;
+    font-weight: 400;
+    text-align: center;
+    line-height: 50px;
+    color: rgba(96, 96, 96, 0.91);
+    -moz-box-shadow: 0 0 5px #888;
+    -webkit-box-shadow: 0 0 5px #888;
+    box-shadow: 0 0 5px #888;
+    /*vertical-align: middle;*/
+}
+
+
+div.historyDate > ul > li {
+    padding-left: 3px;
+    padding-right: 3px;
+    text-decoration: none;
+    height: 49px;
+    display: inline-block;
+    text-align: center;
+    vertical-align: top;
+    cursor: pointer;
+}
+
+div.historyDate > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+div.historyDate > ul > li.icons {
+    background: no-repeat center center;
+    width:32px;
+}
+div.historyDate > ul > li.icons#next {
+    background-image: url("/images/next.png");
+}
+.no-touch div.historyDate > ul > li.icons#next:hover {
+    background-image: url("/images/nextOver.png");
+}
+div.historyDate > ul > li.icons#previous {
+    background-image: url("/images/previous.png");
+}
+.no-touch div.historyDate > ul > li.icons#previous:hover {
+    background-image: url("/images/previousOver.png");
+}
+div.historyDate > ul > li#currentDate {
+    width: 160px;
+}
+
+.headInfo {
+    padding: 0 10px;
+    visibility: visible;
+    font-size: 15px;
+}
+
+div.header > div > ul > li > a {
+    color: #eeeeee;
+    padding-left: 3px;
+    padding-right: 3px;
+    display: block;
+    text-decoration: none;
+    width: 32px;
+    height: 49px;
+    background: no-repeat center 8px;
+    border-right: 1px solid rgba(72, 74, 111, 0.95);
+    border-left: 1px solid rgba(72, 74, 111, 0.95);
+}
+
+div.header > div > ul > li > a#overflow {
+    background-image: url("/images/overflow.png");
+}
+
+div.header > div > ul > li > a#settings {
+    background-image: url("/images/settings.png");
+}
+
+div.header > div > ul > li > a#friends {
+    background-image: url("/images/friends.png");
+}
+
+div.header > div > ul > li > a#history {
+    background-image: url("/images/history.png");
+}
+
+div.header > div > ul > li > a#map {
+    background-image: url("/images/map.png");
+}
+
+div.header > div > ul > li > a > img {
+    position: relative;
+    top: 8px;
 }
 
 .header {
-	position:fixed;
-	top:0;
-	width:100%;
-	height: 50px;
-  	background: rgba(72, 74, 111, 1);
-  	line-height: 50px;
+    position: fixed;
+    top: 0;
+    width: 100%;
+    height: 50px;
+    background: rgba(88, 90, 124, 1.0);
+    line-height: 50px;
+    z-index: 1000;
 }
 
-div.header>div>ul {
-	list-style: none;
-	margin: 0;
-	padding: 0;
+div.header > div > ul {
+    list-style: none;
+    margin: 0;
+    padding: 0;
 }
 
-div.header>div>ul>li {
-	margin: 0;
-	padding: 0;
-	height: 50px;
-	line-height: 50px;
-	display: inline-block;
-	border-right: 1px solid rgba(31, 27, 121, 0.37);
-	border-left: 1px solid rgba(53, 55, 122, 0.85);
-	text-align: center;
-	float: left;
-	font-size:14px;
+div.header > div > ul > li {
+    color: #eeeeee;
+    margin: 0 3px 0 0;
+    /*padding: 0;*/
+    height: 49px;
+    line-height: 49px;
+    display: inline-block;
+    text-align: center;
+    float: left;
+
+}
+
+div.header > div > ul > li > a:hover {
+    background: rgba(72, 74, 111, 1) no-repeat center 8px;
 }
 
 .leftNav {
-	float:left;
+    float: left;
 }
+
 .headerContainer {
-	max-width: 600px;
-	width:100%;
-	height: 50px;
-	margin-left: auto;
-	margin-right: auto;
+    max-width: 500px;
+    width: 100%;
+    height: 50px;
+    margin-left: auto;
+    margin-right: auto;
 }
+
+.contentContainer {
+    width: 100%;
+    top: 50px;
+    position: absolute;
+}
+
 .content {
-	position: fixed;
-	top: 50px;
-	padding: 15px;
+    max-width: 600px;
+    margin: 5px auto 0;
+    width: 95%;
 
 }
 
+.settings {
+    border-top: 2px solid rgb(204, 204, 204);
+    border-bottom: 2px solid rgb(204, 204, 204);
+    margin-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    cursor: pointer;
+}
+
+.settings:hover {
+    background: rgba(204, 204, 204, 0.2);
+}
+
+.info {
+    border-top: 2px solid rgb(204, 204, 204);
+    border-bottom: 2px solid rgb(204, 204, 204);
+    margin-bottom: 5px;
+    padding-left: 10px;
+    padding-right: 10px;
+    padding-bottom: 10px;
+    word-wrap: break-word;
+}
 
 @media screen and (max-width: 800px) {
-  div.header>div>ul>li>a {
-   font-size: 12px; 
-   padding: 0 5px;
-  }
-  .header {
-	height: 40px;	
-	line-height: 40px;
-  }
-  .headerContainer {
-  	height: 40px;
-  }
-  div.header>div>ul>li>a {
-  	line-height: 39px;
-  }
-  div.header>div>ul>li {
-  	line-height: 40px;
-  	height: 40px;
-  }
-  
- .map_container {
-	top: 40px;
-  }
+    html, body {
+        font-size: 13px;
+    }
+
+    div.header > div > ul > li > a {
+        padding-right: 2px;
+        padding-left: 2px;
+        height: 39px;
+    }
+
+    div.header > div > ul > li > a {
+        background-position: center 4px;
+    }
+
+    div.header > div > ul > li > a:hover {
+        background-position: center 4px;
+    }
+
+    div.header > div > ul > li {
+
+        line-height: 40px;
+        height: 40px;
+    }
+
+    .headInfo {
+        font-size: 13px;
+    }
+
+    .header {
+        height: 40px;
+        line-height: 40px;
+    }
+
+    .headerContainer {
+        height: 40px;
+    }
+
+    .contentContainer {
+        top: 40px;
+    }
+
+    h3 {
+        font-size: 14px;
+    }
+
+    .map_container {
+        top: 40px;
+    }
+
 }
-@media screen and (max-width: 500px) {
-  div.header>div>ul>li>a {
-   font-size: 10px; 
-   padding: 0 4px;
-   }
-   .header {
-	height: 30px;	
-	line-height: 30px;
-  }
-  .headerContainer {
-  	height: 30px;
-  }
-  div.header>div>ul>li>a {
-  	line-height: 29px;
-  }
-  div.header>div>ul>li {
-  	line-height: 30px;
-  	height: 30px;
-  }
-  .map_container {
-	top: 30px;
-  }
+
+@media screen and (max-width: 350px) {
+
+    .headInfo {
+        visibility: hidden;
+        padding: 0;
+        font-size: 0;
+    }
+
+    html, body {
+        font-size: 12px;
+    }
+
+    h3 {
+        font-size: 12px;
+    }
+
+    div.header > div > ul {
+        padding-left: 5px;
+    }
+
 }
 
 

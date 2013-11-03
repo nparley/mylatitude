@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<!--suppress ALL -->
+<html>
+  <head>
+    <meta name="viewport" content="initial-scale=1.0, user-scalable=no">
+    <meta charset="utf-8">
+    <title>{{userName}}'s Latitude (Admin Settings)</title>
+    <link rel="shortcut icon" href="/favicon.ico" type="image/x-icon" />
+    <link href='//fonts.googleapis.com/css?family=Roboto:500,400,300' rel='stylesheet' type='text/css'>
+    <link href="/stylesheets/default.css" rel="stylesheet">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.0.3/jquery.min.js"></script>
+    <script src="/js/main.js"></script>
+  </head>
+  <body>
+  <div class="header"><div class="headerContainer">
+  <ul id="left-nav">
+            <li class="headInfo">Admin Settings</li>
+            <li><a id="map" title="{{userName}}'s Location" href="/"></a></li>
+            <li><a id="history" title="History View" href="/history"></a></li>
+            <li><a id="friends" title="Friends Locations" href="/"></a></li>
+            <li><a id="settings" title="Admin Settings" href="/admin"></a></li>
+        </ul>
+  </div></div>
+  <div class="contentContainer">
+  <div class="content">
+  	  <h3>Admin Settings:</h3>
+	  <div url="/viewkey" class="settings">
+	  <h3>View Key</h3>
+	  View your application key used when updating your location.
+	  </div>
+	  <div url="/newkey" class="settings">
+	  <h3>New Key</h3>
+	  Remove your application key and create a new random key.
+	  </div>
+	  <div url="/newfriend" class="settings">
+	  <h3>Allow Friend Access</h3>
+	  Create a unique URL that can be given to a friend to give them view access to this application and your location.
+	  </div>
+	  <div url="/viewurls" class="settings">
+	  <h3>View unused URLs</h3>
+	  See a list of URLS that are still active and have not been used for registration.
+	  </div>
+      <div url="/importexport" class="settings">
+	  <h3>Import / Export</h3>
+	  Import or export your location data
+	  </div>
+  </div>
+  </div>
+  </body>
+</html>
