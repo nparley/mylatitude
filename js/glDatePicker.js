@@ -234,7 +234,7 @@
 
 			// Render calendar
 			self.render();
-		};
+		}
 
 		// Public methods
 		glDatePicker.prototype =
@@ -522,7 +522,7 @@
 						var cellDate = new Date(startDate);
 						var cellClass = 'day';
 						var cellZIndex = options.zIndex + (cellIndex);
-						var cell = $('<div/>')
+						var cell = $('<div/>');
 
 						if(!row) {
 							cellClass = 'dow';
@@ -661,7 +661,7 @@
 							borderLeftWidth: (row > 0 || (!row && !col)) ? borderSize : 0,
 							borderRightWidth: (row > 0 || (!row && col == 6)) ? borderSize : 0,
 							marginLeft: (col > 0) ? '-' + (borderSize) : 0,
-							marginTop: (row > 0) ? '-' + (borderSize) : 0,
+							marginTop: (row > 0) ? '-' + (borderSize) : 0
 //							zIndex: cellZIndex
 						});
 
