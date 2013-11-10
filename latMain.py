@@ -21,6 +21,7 @@ from google.appengine.api import app_identity
 import jinja2
 import webapp2
 
+import mylatitude.datastore
 from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
 from google.appengine.ext.webapp import blobstore_handlers
 import oauth2client.clientsecrets
@@ -107,7 +108,7 @@ def check_user(user, output, allow_access=False, forward_url='/'):
     @return: True for allow, False for no access
     """
     if user:
-        user_check = Users.get_by_id(user['id'])
+        user_check = mylatitude.datastore.Users.get_by_id(user['id'])
         if user_check:
             return True
         else:
@@ -132,7 +133,7 @@ def check_owner_user(user, output, forward_url='/'):
     @return: True for owner access, False for no access
     """
     if user:
-        user_check = Users.get_by_id(user['id'])
+        user_check = mylatitude.datastore.Users.get_by_id(user['id'])
         if user_check:
             if user_check.owner:
                 return True, user_check
@@ -185,74 +186,6 @@ def email_after_task(to_email, task_name, message, attachment=None):
         mail.send_mail(sender=sender, to=to_email, subject="Task %s Finished" % task_name, body=message)
 
 
-class Location(ndb.Model):
-    """
-    Database Location Class: for storing location data
-    """
-    timestampMs = ndb.IntegerProperty(required=True)
-    latitudeE7 = ndb.IntegerProperty(required=True)
-    longitudeE7 = ndb.IntegerProperty(required=True)
-    accuracy = ndb.IntegerProperty(required=True)
-    velocity = ndb.IntegerProperty()
-    heading = ndb.IntegerProperty()
-    altitude = ndb.IntegerProperty()
-    verticalAccuracy = ndb.IntegerProperty()
-
-
-class Maps(ndb.Model):
-    """
-    Database Maps Class: for storing Google Maps API key
-    """
-    keyid = ndb.StringProperty(required=True)
-
-
-class Users(ndb.Model):
-    """
-    Database Users Class: for storing allowed users
-    """
-    userid = ndb.StringProperty(required=True)
-    owner = ndb.BooleanProperty(required=True)
-    name = ndb.StringProperty(required=True)
-    picture = ndb.StringProperty(default="/images/blank.jpg")
-    email = ndb.StringProperty(required=True)
-    clientid = ndb.StringProperty(default="")
-    appURL = ndb.StringProperty(default="")
-    allowApp = ndb.BooleanProperty(default=False)
-    expires = ndb.IntegerProperty(default=0)
-
-
-class TimeZones(ndb.Model):
-    """
-    Database TimeZone Class: for storing the Timezone for a day
-    """
-    day = ndb.DateProperty(required=True)
-    dstOffset = ndb.IntegerProperty(required=True)
-    rawOffset = ndb.IntegerProperty(required=True)
-    timeZoneId = ndb.StringProperty(required=True)
-    timeZoneName = ndb.StringProperty(required=True)
-
-
-class Keys(ndb.Model):
-    """
-    Database Keys Class: holds the backitude access key
-    """
-    keyid = ndb.StringProperty(required=True)
-
-
-class FriendUrls(ndb.Model):
-    """
-    Database Friends URL Class: holds the random keys to allow friends access
-    """
-    keyid = ndb.StringProperty(required=True)
-    expires = ndb.IntegerProperty(default=0)
-
-
-class SetupFormKey(ndb.Model):
-    """
-    Holds the setup form key
-    """
-    keyid = ndb.StringProperty(required=True)
-
 #class oauthTest(webapp2.RequestHandler):
 #  @decorator.oauth_required
 #  def get(self):
@@ -290,15 +223,15 @@ class MainPage(webapp2.RequestHandler):
         if check_user(user, self.response):
             #noinspection PyBroadException
             try:
-                owner = Users.query(Users.owner == True).fetch(1)[0]
+                owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
             except IndexError:
                 greeting = 'Run /setup first'
                 template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
                 template_values = {'content': greeting}
                 self.response.write(template.render(template_values))
                 return
-            gkey = Maps.query().fetch(1)[0]
-            locations = Location.query().order(-Location.timestampMs).fetch(2)
+            gkey = mylatitude.datastore.Maps.query().fetch(1)[0]
+            locations = mylatitude.datastore.Location.query().order(-mylatitude.datastore.Location.timestampMs).fetch(2)
             location_array = []
             latest_update = None
             for location in locations:
@@ -323,7 +256,8 @@ class MainPage(webapp2.RequestHandler):
             api_root = "%s/_ah/api" % self.request.host_url
             template = JINJA_ENVIRONMENT.get_template('/templates/index.html')
             template_values = {'locations': location_array, 'userName': owner.name, 'key': str(gkey.keyid),
-                               'owner': Users.get_by_id(user['id']).owner, 'ownerPic': owner.picture,
+                               'owner': mylatitude.datastore.Users.get_by_id(user['id']).owner,
+                               'ownerPic': owner.picture,
                                'apiRoot': api_root,
                                'clientID': client_obj[1]['client_id']}
             self.response.write(template.render(template_values))
@@ -340,7 +274,7 @@ class SetupOwner(webapp2.RequestHandler):
     @decorator.oauth_required
     def get(self):
         http = decorator.http()
-        number_of_users = Users.query().count()
+        number_of_users = mylatitude.datastore.Users.query().count()
         if number_of_users > 0:
             template_values = {'content': 'This app already has an owning user, nothing to do here',
                                'header': 'Already setup'}
@@ -350,12 +284,12 @@ class SetupOwner(webapp2.RequestHandler):
         user = service.userinfo().get().execute(http=http)
         if user:
             try:
-                current_setup_key = SetupFormKey.query().fetch(1)[0]
+                current_setup_key = mylatitude.datastore.SetupFormKey.query().fetch(1)[0]
                 current_setup_key.key.delete()
             except IndexError:
                 pass  # No setup key
             new_random_key = random_key(15)
-            new_setup_key = SetupFormKey(id=new_random_key)
+            new_setup_key = mylatitude.datastore.SetupFormKey(id=new_random_key)
             new_setup_key.keyid = new_random_key
             new_setup_key.put()
             template_values = {'userName': user['given_name'], 'key': new_random_key}
@@ -367,13 +301,13 @@ class SetupOwner(webapp2.RequestHandler):
     @decorator.oauth_required
     def post(self):
         try:
-            form_key_check = SetupFormKey.get_by_id(self.request.POST['form_key'])
+            form_key_check = mylatitude.datastore.SetupFormKey.get_by_id(self.request.POST['form_key'])
             if not form_key_check:
                 raise KeyError
             form_key_check.key.delete()
         except KeyError:
             self.abort(401)
-        number_of_users = Users.query().count()
+        number_of_users = mylatitude.datastore.Users.query().count()
         if number_of_users > 0:
             template_values = {'content': 'This app already has an owning user, nothing to do here',
                                'header': 'Already setup'}
@@ -392,7 +326,7 @@ class SetupOwner(webapp2.RequestHandler):
                 template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
                 self.response.write(template.render(template_values))
                 return
-            admin_user = Users(id=user['id'])
+            admin_user = mylatitude.datastore.Users(id=user['id'])
             admin_user.userid = user['id']
             admin_user.owner = True
             admin_user.name = user_name
@@ -402,11 +336,11 @@ class SetupOwner(webapp2.RequestHandler):
                 admin_user.picture = '/images/blank.jpg'
             admin_user.email = user['email']
             admin_user.put()
-            gmaps = Maps()
+            gmaps = mylatitude.datastore.Maps()
             gmaps.keyid = map_key
             gmaps.put()
             key = random_key(15)
-            new_key_obj = Keys(id=key)
+            new_key_obj = mylatitude.datastore.Keys(id=key)
             new_key_obj.keyid = key
             new_key_obj.put()
             content = ('All setup, %s you have access!' % user_name)
@@ -427,7 +361,7 @@ class NewFriendUrl(webapp2.RequestHandler):
     @check_owner_user_dec('/newfriend')
     def get(self, user_data):
         key = random_key(15)
-        new_url = FriendUrls(id=key)
+        new_url = mylatitude.datastore.FriendUrls(id=key)
         new_url.keyid = key
         new_url.put()
         url = "%s/addviewer/%s" % (self.request.host_url, key)
@@ -445,7 +379,7 @@ class ViewURLs(webapp2.RequestHandler):
     @decorator.oauth_required
     @check_owner_user_dec('/viewurls')
     def get(self, user_data):
-        current_urls = FriendUrls.query().fetch(10)
+        current_urls = mylatitude.datastore.FriendUrls.query().fetch(10)
         content = "These URLs are active to enable friends to view your location: <br/>"
         for url in current_urls:
             content += "<br/>%s/addviewer/%s <br/>" % (self.request.host_url, url.keyid)
@@ -463,13 +397,13 @@ class AddViewer(webapp2.RequestHandler):
     """
     @decorator.oauth_required
     def get(self, key):
-        dbkey = FriendUrls.get_by_id(key)
+        dbkey = mylatitude.datastore.FriendUrls.get_by_id(key)
         if dbkey:
             http = decorator.http()
             user = service.userinfo().get().execute(http=http)
             if check_user(user, self.response, allow_access=True, forward_url=self.request.url):
-                if Users.get_by_id(user['id']) is None:
-                    new_user = Users(id=user['id'])
+                if mylatitude.datastore.Users.get_by_id(user['id']) is None:
+                    new_user = mylatitude.datastore.Users(id=user['id'])
                     new_user.userid = user['id']
                     new_user.owner = False
                     new_user.name = user['given_name']
@@ -522,7 +456,7 @@ class ViewKey(webapp2.RequestHandler):
     @check_owner_user_dec('/viewkey')
     def get(self, user_data):
         try:
-            currentkeys = Keys.query().fetch(1)
+            currentkeys = mylatitude.datastore.Keys.query().fetch(1)
             key = currentkeys[0].keyid
         except IndexError:
             content = 'You have no backitude error (Please create a new key)'
@@ -545,12 +479,12 @@ class NewKey(webapp2.RequestHandler):
     @check_owner_user_dec('/newkey')
     def get(self, user_data):
         try:
-            current_key = Keys.query().fetch(1)[0]
+            current_key = mylatitude.datastore.Keys.query().fetch(1)[0]
             current_key.key.delete()
         except IndexError:
             pass  # for some reason the key already got deleted
         new_random_key = random_key(15)
-        new_key_obj = Keys(id=new_random_key)
+        new_key_obj = mylatitude.datastore.Keys(id=new_random_key)
         new_key_obj.keyid = new_random_key
         new_key_obj.put()
         content = '%s' % new_random_key
@@ -584,16 +518,16 @@ class InsertLocation(webapp2.RequestHandler):
         except KeyError:
             json_error(self.response, 401, "No Access")
             return
-        if not Keys.get_by_id(key):
+        if not mylatitude.datastore.Keys.get_by_id(key):
             json_error(self.response, 401, "No Access")
             return
         post_body = json.loads(self.request.body)
-        new_location = Location.get_by_id(post_body['timestampMs'])
+        new_location = mylatitude.datastore.Location.get_by_id(post_body['timestampMs'])
         if new_location:
             json_error(self.response, 200, "Time stamp error")
             return
         try:
-            new_location = Location(id=post_body['timestampMs'])
+            new_location = mylatitude.datastore.Location(id=post_body['timestampMs'])
             new_location.timestampMs = int(post_body['timestampMs'])
             new_location.latitudeE7 = int(post_body['latitudeE7'])
             new_location.longitudeE7 = int(post_body['longitudeE7'])
@@ -620,7 +554,7 @@ class InsertBack(webapp2.RequestHandler):
     def post(self):
         try:
             key = self.request.POST['key']
-            if not Keys.get_by_id(key):
+            if not mylatitude.datastore.Keys.get_by_id(key):
                 json_error(self.response, 401, "No Access")
                 return
             latitude = int(float(self.request.POST['latitude']) * 1E7)
@@ -667,13 +601,13 @@ class InsertBack(webapp2.RequestHandler):
         # Only add the location to the database if the timestamp is unique
         # but send a 200 code so backitude doesn't store the location and
         # keep trying
-        new_location = Location.get_by_id(id=str(timestamp))
+        new_location = mylatitude.datastore.Location.get_by_id(id=str(timestamp))
         if new_location:
             json_error(self.response, 200, "Time stamp error")
             return
             #noinspection PyBroadException
         try:
-            new_location = Location(id=str(timestamp))
+            new_location = mylatitude.datastore.Location(id=str(timestamp))
             new_location.timestampMs = timestamp
             new_location.latitudeE7 = latitude
             new_location.longitudeE7 = longitude
@@ -709,15 +643,19 @@ class ExportLocations(webapp2.RequestHandler):
         @param end_stamp:  Int timestampMs of the end date for export (inclusive) or None
         @return: dict(locations:[{"timestampMs":1245...,"latitudeE7":1452...,...},{}...])
         """
+        location_class = mylatitude.datastore.Location
         if start_stamp and end_stamp:
-            locations_query = Location.query(Location.timestampMs >= start_stamp,
-                                             Location.timestampMs <= end_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs >= start_stamp,
+                                                   location_class.timestampMs <= end_stamp)\
+                .order(-location_class.timestampMs).fetch()
         elif start_stamp:
-            locations_query = Location.query(Location.timestampMs >= start_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs >= start_stamp)\
+                .order(-location_class.timestampMs).fetch()
         elif end_stamp:
-            locations_query = Location.query(Location.timestampMs <= end_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs <= end_stamp)\
+                .order(-location_class.timestampMs).fetch()
         else:
-            locations_query = Location.query().order(-Location.timestampMs).fetch()
+            locations_query = location_class.query().order(-location_class.timestampMs).fetch()
         locations = []
         for location in locations_query:
             locations.append(dict(timestampMs=location.timestampMs,
@@ -739,15 +677,19 @@ class ExportLocations(webapp2.RequestHandler):
         @param end_stamp: Int timestampMs of the end date for export (inclusive) or None
         @return: CSV file bytes
         """
+        location_class = mylatitude.datastore.Location
         if start_stamp and end_stamp:
-            locations_query = Location.query(Location.timestampMs >= start_stamp,
-                                             Location.timestampMs <= end_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs >= start_stamp,
+                                                   location_class.timestampMs <= end_stamp)\
+                .order(-location_class.timestampMs).fetch()
         elif start_stamp:
-            locations_query = Location.query(Location.timestampMs >= start_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs >= start_stamp)\
+                .order(-location_class.timestampMs).fetch()
         elif end_stamp:
-            locations_query = Location.query(Location.timestampMs <= end_stamp).order(-Location.timestampMs).fetch()
+            locations_query = location_class.query(location_class.timestampMs <= end_stamp)\
+                .order(-location_class.timestampMs).fetch()
         else:
-            locations_query = Location.query().order(-Location.timestampMs).fetch()
+            locations_query = location_class.query().order(-location_class.timestampMs).fetch()
 
         with io.BytesIO() as output:
             writer = csv.writer(output)
@@ -782,7 +724,7 @@ def export_locations_task(user_obj, output_format):
     @param output_format: Str "JSON" or "CSV" to define what format is exported
     @return: None
     """
-    user_check = Users.get_by_id(user_obj['id'])
+    user_check = mylatitude.datastore.Users.get_by_id(user_obj['id'])
     if not user_check.owner:
         message = "Export Location called by non owner user"
         logging.error(message)
@@ -839,11 +781,11 @@ class ImportLocation(blobstore_handlers.BlobstoreUploadHandler):
         new = 0
         try:
             for location in json_obj['locations']:
-                new_location = Location.get_by_id(id=str(location["timestampMs"]))
+                new_location = mylatitude.datastore.Location.get_by_id(id=str(location["timestampMs"]))
                 if new_location:
                     existing += 1
                     continue
-                new_location = Location(id=str(location["timestampMs"]))
+                new_location = mylatitude.datastore.Location(id=str(location["timestampMs"]))
                 new_location.timestampMs = location["timestampMs"]
                 new_location.latitudeE7 = location["latitudeE7"]
                 new_location.longitudeE7 = location["longitudeE7"]
@@ -889,11 +831,12 @@ class ImportLocation(blobstore_handlers.BlobstoreUploadHandler):
                         first_line = False
                         continue
                     location_values = map(int, locationLine.rstrip().split(","))
-                    new_location = Location.get_by_id(id=str(location_values[lookup["timestampMs"]]))
+                    new_location = \
+                        mylatitude.datastore.Location.get_by_id(id=str(location_values[lookup["timestampMs"]]))
                     if new_location:
                         existing += 1
                         continue
-                    new_location = Location(id=str(location_values[lookup["timestampMs"]]))
+                    new_location = mylatitude.datastore.Location(id=str(location_values[lookup["timestampMs"]]))
                     new_location.timestampMs = location_values[lookup["timestampMs"]]
                     new_location.latitudeE7 = location_values[lookup["latitudeE7"]]
                     new_location.longitudeE7 = location_values[lookup["longitudeE7"]]
@@ -941,7 +884,7 @@ def import_locations_task(user_obj, blob_key):
     @param user_obj: User Dict for email and to check owner info
     @param blob_key: Key of the uploaded file so we can read it from the blobstore
     """
-    user_check = Users.get_by_id(user_obj['id'])
+    user_check = mylatitude.datastore.Users.get_by_id(user_obj['id'])
     if not user_check.owner:
         logging.error("Import Location called by non owner user")
         blobstore.delete(blob_key)

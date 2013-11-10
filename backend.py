@@ -15,7 +15,7 @@ from protorpc import remote
 from google.appengine.api import urlfetch
 
 import auth_util
-from latMain import Users, Location, TimeZones
+import mylatitude.datastore
 import oauth2client.clientsecrets
 
 clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
@@ -53,7 +53,7 @@ def any_user(user_id):
     @return: Boolean True or False
     """
     if user_id:
-        user_check = Users.get_by_id(user_id)
+        user_check = mylatitude.datastore.Users.get_by_id(user_id)
         if user_check:
             return True
     return False
@@ -66,7 +66,7 @@ def owner_user(user_id):
     @return: Boolean True or False
     """
     if user_id:
-        user_check = Users.get_by_id(user_id)
+        user_check = mylatitude.datastore.Users.get_by_id(user_id)
         if user_check:
             if user_check.owner:
                 return True
@@ -192,17 +192,20 @@ class LocationsEndPoint(remote.Service):
         @return: ndb TimeZones class object
         @raise endpoints.NotFoundException: If no locations are found for the day
         """
-        new_timezone_obj = TimeZones.get_by_id(str(day_ts_ms))
+        new_timezone_obj = mylatitude.datastore.TimeZones.get_by_id(str(day_ts_ms))
         if new_timezone_obj:
             return new_timezone_obj
         # + order = smallest first, - order = largest first
-        before_midday_qry = Location.query(Location.timestampMs >= day_ts_ms - MILLIS_PER_24HOURS,
-                                           Location.timestampMs <= day_ts_ms).order(-Location.timestampMs)
+        before_midday_qry = mylatitude.datastore.Location.query(
+            mylatitude.datastore.Location.timestampMs >= day_ts_ms - MILLIS_PER_24HOURS,
+            mylatitude.datastore.Location.timestampMs <= day_ts_ms)\
+            .order(-mylatitude.datastore.Location.timestampMs)
         before_midday_fut = before_midday_qry.fetch_async(1)
 
-        after_midday_qry = Location.query(Location.timestampMs > day_ts_ms,
-                                          Location.timestampMs <= day_ts_ms +
-                                          MILLIS_PER_24HOURS).order(Location.timestampMs)
+        after_midday_qry = mylatitude.datastore.Location.query(
+            mylatitude.datastore.Location.timestampMs > day_ts_ms,
+            mylatitude.datastore.Location.timestampMs <= day_ts_ms + MILLIS_PER_24HOURS)\
+            .order(mylatitude.datastore.Location.timestampMs)
         after_midday_fut = after_midday_qry.fetch_async(1)
 
         try:
@@ -235,7 +238,7 @@ class LocationsEndPoint(remote.Service):
 
         timezone_result = urlfetch.fetch(url=timezone_api_url, method=urlfetch.GET, validate_certificate=True)
         if timezone_result.status_code == 200:
-            new_timezone_obj = TimeZones(id=str(day_ts_ms))
+            new_timezone_obj = mylatitude.datastore.TimeZones(id=str(day_ts_ms))
             new_timezone_obj.day = day.date()
             tz_json = json.loads(timezone_result.content)
             new_timezone_obj.dstOffset = tz_json["dstOffset"]
@@ -245,7 +248,7 @@ class LocationsEndPoint(remote.Service):
             new_timezone_obj.put()
             return new_timezone_obj
         else:
-            new_timezone_obj = TimeZones(id=str(day_ts_ms))
+            new_timezone_obj = mylatitude.datastore.TimeZones(id=str(day_ts_ms))
             new_timezone_obj.day = day.date()
             new_timezone_obj.dstOffset = 0
             new_timezone_obj.rawOffset = 0
@@ -265,7 +268,7 @@ class LocationsEndPoint(remote.Service):
         @return: SingleLocationMessage message with latest location data
         @raise endpoints.NotFoundException: If no locations are in the database
         """
-        last_location = Location.query().order(-Location.timestampMs).fetch(1)
+        last_location = mylatitude.datastore.Location.query().order(-mylatitude.datastore.Location.timestampMs).fetch(1)
         location = self.create_location_message(last_location[0])
         if not last_location:
             raise endpoints.NotFoundException('No locations in database')
@@ -294,9 +297,10 @@ class LocationsEndPoint(remote.Service):
         timezone = self.get_time_zone(history_date, history_date_ts_ms)
         history_date_ts_ms -= (timezone.dstOffset * 1000)
         history_date_ts_ms -= (timezone.rawOffset * 1000)
-        qry = Location.query(Location.timestampMs >= history_date_ts_ms - MILLIS_PER_12HOURS,
-                             Location.timestampMs <= history_date_ts_ms
-                             + MILLIS_PER_12HOURS).order(-Location.timestampMs)
+        qry = mylatitude.datastore.Location.query(
+            mylatitude.datastore.Location.timestampMs >= history_date_ts_ms - MILLIS_PER_12HOURS,
+            mylatitude.datastore.Location.timestampMs <= history_date_ts_ms + MILLIS_PER_12HOURS)\
+            .order(-mylatitude.datastore.Location.timestampMs)
         days_locations_fut = qry.fetch_async()
 
         day_message = self.create_date_message(request.year, request.month, request.day)
