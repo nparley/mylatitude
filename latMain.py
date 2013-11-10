@@ -2,7 +2,6 @@ import io
 import csv
 import os
 import datetime
-from functools import wraps
 import json
 import base64
 import zipfile
@@ -12,7 +11,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 
 from google.appengine.api import users
 from google.appengine.ext import ndb
-from apiclient.discovery import build
 from google.appengine.ext import blobstore
 from google.appengine.ext import deferred
 from google.appengine.api import mail
@@ -21,16 +19,11 @@ from google.appengine.api import app_identity
 import jinja2
 import webapp2
 
-import mylatitude.datastore
-from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
 from google.appengine.ext.webapp import blobstore_handlers
 import oauth2client.clientsecrets
 
-decorator = OAuth2DecoratorFromClientSecrets(
-    os.path.join(os.path.dirname(__file__), 'client_secrets.json'),
-    ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email'])
-
-service = build("oauth2", "v2")
+import mylatitude.datastore
+import mylatitude.auth
 
 JINJA_ENVIRONMENT = jinja2.Environment(
     loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
@@ -46,106 +39,11 @@ def random_key(n=15):
     return base64.urlsafe_b64encode(os.urandom(n))
 
 
-def no_access(user, output, forward_url='/'):
-    """
-    Display no access HTML message
-
-    Creates the no access HTML message to the user and enables them to log out in case
-    they have access under a different username.
-    @param user: dict of user info
-    @param output: webapp2 response object
-    @param forward_url: url to send user to after logout
-    @return: None
-    """
-    template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
-    content = ('Sorry, %s you do not have access to this app! (<a href="%s">sign out</a>)' %
-               (user['name'], users.create_logout_url(forward_url)))
-    template_values = {'content': content, 'header': 'No Access'}
-    output.write(template.render(template_values))
-
 # def signIn(user,output,forward_url='/'):
 #   template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
 #   greeting = ('<a href="%s">Please Sign in</a>.' % users.create_login_url(forward_url))
 #   template_values = {'content':greeting}
 #   output.write(template.render(template_values))
-
-
-def check_owner_user_dec(forward_url='/'):
-    """
-    Decorator for the checkOwnerUser returns f() if user is the owner if not writes out no access
-
-    @param forward_url: Forwarding URL after sign out
-    @return: f() or not access template, user_data which is the result of the datastore get plus user_data.auth which is
-    the user dictionary from the oauth profile
-    """
-
-    def func_wrapper(func):
-        @wraps(func)
-        def wrapper(self, *args, **kwargs):
-            http = decorator.http()
-            user = service.userinfo().get().execute(http=http)
-            owner_check, user_data = check_owner_user(user, self.response, forward_url=forward_url)
-            if owner_check:
-                user_data.auth = user
-                kwargs['user_data'] = user_data
-                return func(self, *args, **kwargs)
-
-        return wrapper
-
-    return func_wrapper
-
-
-def check_user(user, output, allow_access=False, forward_url='/'):
-    """
-    Check if the user can view
-
-    Checks the google profile id is in the database of allowed users. Can be used to check that the user dict is set
-    i.e. by setting allowAcess == true this function will only fail when user is None
-    @param user: dict from user info
-    @param output: webapp2 response object
-    @param allow_access: True to allow users not in the database (i.e. for adding users)
-    @param forward_url: URL to forward user to if sign out needs to be generated
-    @return: True for allow, False for no access
-    """
-    if user:
-        user_check = mylatitude.datastore.Users.get_by_id(user['id'])
-        if user_check:
-            return True
-        else:
-            if not allow_access:
-                no_access(user, output, forward_url)
-                return False
-            else:
-                return True
-    else:
-        no_access(user, output, forward_url)
-        return False
-
-
-def check_owner_user(user, output, forward_url='/'):
-    """
-    Check if the user is the owner
-
-    Checks to see if the users google profile id is in the allowed user database with owner set to True.
-    @param user: dict from user info
-    @param output: webapp2 response object
-    @param forward_url: URL to forward user to if sign out needs to be generated
-    @return: True for owner access, False for no access
-    """
-    if user:
-        user_check = mylatitude.datastore.Users.get_by_id(user['id'])
-        if user_check:
-            if user_check.owner:
-                return True, user_check
-            else:
-                no_access(user, output, forward_url)
-                return False, None
-        else:
-            no_access(user, output, forward_url)
-            return False, None
-    else:
-        no_access(user, output, forward_url)
-        return False, None
 
 
 def json_error(response, code, message):
@@ -187,11 +85,11 @@ def email_after_task(to_email, task_name, message, attachment=None):
 
 
 #class oauthTest(webapp2.RequestHandler):
-#  @decorator.oauth_required
+#  @mylatitude.auth.decorator.oauth_required
 #  def get(self):
-#    if decorator.has_credentials():
-#      http = decorator.http()
-#      me = service.userinfo().get().execute(http=http)
+#    if mylatitude.auth.decorator.has_credentials():
+#      http = mylatitude.auth.decorator.http()
+#      me = mylatitude.auth.mylatitude.auth.service.userinfo().get().execute(http=http)
 #      #info = {"name":me['displayName'],"id":me['userID']}
 #      self.response.write(me)
 
@@ -216,11 +114,11 @@ class MainPage(webapp2.RequestHandler):
     Generates the main map page
     """
 
-    @decorator.oauth_required
+    @mylatitude.auth.decorator.oauth_required
     def get(self):
-        http = decorator.http()
-        user = service.userinfo().get().execute(http=http)
-        if check_user(user, self.response):
+        http = mylatitude.auth.decorator.http()
+        user = mylatitude.auth.service.userinfo().get().execute(http=http)
+        if mylatitude.auth.check_user(user, self.response):
             #noinspection PyBroadException
             try:
                 owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
@@ -271,9 +169,9 @@ class SetupOwner(webapp2.RequestHandler):
     POST: Creates the new owner user and displays the backitude access key
     """
 
-    @decorator.oauth_required
+    @mylatitude.auth.decorator.oauth_required
     def get(self):
-        http = decorator.http()
+        http = mylatitude.auth.decorator.http()
         number_of_users = mylatitude.datastore.Users.query().count()
         if number_of_users > 0:
             template_values = {'content': 'This app already has an owning user, nothing to do here',
@@ -281,7 +179,7 @@ class SetupOwner(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
             self.response.write(template.render(template_values))
             return
-        user = service.userinfo().get().execute(http=http)
+        user = mylatitude.auth.service.userinfo().get().execute(http=http)
         if user:
             try:
                 current_setup_key = mylatitude.datastore.SetupFormKey.query().fetch(1)[0]
@@ -296,9 +194,9 @@ class SetupOwner(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('/templates/userSetup.html')
             self.response.write(template.render(template_values))
         else:
-            no_access(user, self.response, "/setup")
+            mylatitude.auth.no_access(user, self.response, "/setup")
 
-    @decorator.oauth_required
+    @mylatitude.auth.decorator.oauth_required
     def post(self):
         try:
             form_key_check = mylatitude.datastore.SetupFormKey.get_by_id(self.request.POST['form_key'])
@@ -314,8 +212,8 @@ class SetupOwner(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
             self.response.write(template.render(template_values))
             return
-        http = decorator.http()
-        user = service.userinfo().get().execute(http=http)
+        http = mylatitude.auth.decorator.http()
+        user = mylatitude.auth.service.userinfo().get().execute(http=http)
         if user:
             try:
                 map_key = self.request.POST['mapKey']
@@ -349,7 +247,7 @@ class SetupOwner(webapp2.RequestHandler):
             template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
             self.response.write(template.render(template_values))
         else:
-            no_access(user, self.response, "/setup")
+            mylatitude.auth.no_access(user, self.response, "/setup")
 
 
 class NewFriendUrl(webapp2.RequestHandler):
@@ -357,8 +255,8 @@ class NewFriendUrl(webapp2.RequestHandler):
     Creates a new random URL to allow a friend access
     """
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/newfriend')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/newfriend')
     def get(self, user_data):
         key = random_key(15)
         new_url = mylatitude.datastore.FriendUrls(id=key)
@@ -376,8 +274,8 @@ class ViewURLs(webapp2.RequestHandler):
     Displays the unused friend URLs
     """
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/viewurls')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/viewurls')
     def get(self, user_data):
         current_urls = mylatitude.datastore.FriendUrls.query().fetch(10)
         content = "These URLs are active to enable friends to view your location: <br/>"
@@ -395,13 +293,13 @@ class AddViewer(webapp2.RequestHandler):
     Gets the key from the URL and check it's in the database of friend URL keys, if it is add the user
     and delete the key from the database as it has now been used.
     """
-    @decorator.oauth_required
+    @mylatitude.auth.decorator.oauth_required
     def get(self, key):
         dbkey = mylatitude.datastore.FriendUrls.get_by_id(key)
         if dbkey:
-            http = decorator.http()
-            user = service.userinfo().get().execute(http=http)
-            if check_user(user, self.response, allow_access=True, forward_url=self.request.url):
+            http = mylatitude.auth.decorator.http()
+            user = mylatitude.auth.service.userinfo().get().execute(http=http)
+            if mylatitude.auth.check_user(user, self.response, allow_access=True, forward_url=self.request.url):
                 if mylatitude.datastore.Users.get_by_id(user['id']) is None:
                     new_user = mylatitude.datastore.Users(id=user['id'])
                     new_user.userid = user['id']
@@ -423,8 +321,8 @@ class ViewHistory(webapp2.RequestHandler):
     """
     View the history page for the app
     """
-    @decorator.oauth_required
-    @check_owner_user_dec('/history')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/history')
     def get(self, user_data):
         client_obj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
         api_root = "%s/_ah/api" % self.request.host_url
@@ -439,8 +337,8 @@ class ViewAdmin(webapp2.RequestHandler):
     View the admin settings page for the app
     """
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/admin')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/admin')
     def get(self, user_data):
         template_values = {'userName': user_data.name}
         template = JINJA_ENVIRONMENT.get_template('/templates/admin.html')
@@ -452,8 +350,8 @@ class ViewKey(webapp2.RequestHandler):
     Display the backitude key to the user
     """
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/viewkey')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/viewkey')
     def get(self, user_data):
         try:
             currentkeys = mylatitude.datastore.Keys.query().fetch(1)
@@ -475,8 +373,8 @@ class NewKey(webapp2.RequestHandler):
     """
     Create a new backitude key and delete the old one
     """
-    @decorator.oauth_required
-    @check_owner_user_dec('/newkey')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/newkey')
     def get(self, user_data):
         try:
             current_key = mylatitude.datastore.Keys.query().fetch(1)[0]
@@ -702,8 +600,8 @@ class ExportLocations(webapp2.RequestHandler):
 
             return output.getvalue()
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/importExport')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/importExport')
     def post(self, user_data):
         """
         Post method to kick off the export task
@@ -750,8 +648,8 @@ class ImportExport(webapp2.RequestHandler):
     Get: creates a import / export web page with a link to import and exporting the location data
     """
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/importExport')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/importExport')
     def get(self, user_data):
         upload_url = blobstore.create_upload_url('/importlocations')
         template_values = {'url': upload_url, 'userName': user_data.name}
@@ -852,8 +750,8 @@ class ImportLocation(blobstore_handlers.BlobstoreUploadHandler):
                     raise deferred.PermanentTaskFailure("Format of input file is incorrect")
         return new, existing
 
-    @decorator.oauth_required
-    @check_owner_user_dec('/importExport')
+    @mylatitude.auth.decorator.oauth_required
+    @mylatitude.auth.check_owner_user_dec('/importExport')
     def post(self, user_data):
         """
         Post method to kick off the import task
@@ -965,5 +863,5 @@ application = webapp2.WSGIApplication(
      ('/admin', ViewAdmin), ('/newkey', NewKey), ('/importexport', ImportExport), ('/history', ViewHistory),
      ('/signout', SignOut),
      ('/exportlocations', ExportLocations), ('/importlocations', ImportLocation),
-     (decorator.callback_path, decorator.callback_handler()),
+     (mylatitude.auth.decorator.callback_path, mylatitude.auth.decorator.callback_handler()),
      webapp2.Route('/addviewer/<key>', handler=AddViewer, name='addviewer')], debug=True)

@@ -1,10 +1,7 @@
-import os
 import datetime
 import logging
 import calendar
 import json
-
-from functools import wraps
 
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -14,63 +11,8 @@ from protorpc import message_types
 from protorpc import remote
 from google.appengine.api import urlfetch
 
-import auth_util
 import mylatitude.datastore
-import oauth2client.clientsecrets
-
-clientObj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
-ALLOWED_CLIENT_IDS = [clientObj[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
-SCOPES = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']
-
-
-def user_required(user_test_function):
-    """ Decorator to test if there is a valid user for API endpoint function
-
-    returns API if user_test_function passes for user_id if not raises exception
-    @param user_test_function: Function to test the Google user_id generated from the access token
-    @return: input endpoint function
-    @raise endpoints.UnauthorizedException: If user is not allowed
-    """
-
-    def user_required_wrap(func):
-        @wraps(func)
-        def check_user_token(*args, **kwargs):
-            user_id = auth_util.get_google_plus_user_id()
-            if user_test_function(user_id):
-                return func(*args, **kwargs)
-            else:
-                raise endpoints.UnauthorizedException('User does not have access to this endpoint')
-
-        return check_user_token
-
-    return user_required_wrap
-
-
-def any_user(user_id):
-    """ Returns True if user_id is in the allowed users database table
-
-    @param user_id: Google User ID
-    @return: Boolean True or False
-    """
-    if user_id:
-        user_check = mylatitude.datastore.Users.get_by_id(user_id)
-        if user_check:
-            return True
-    return False
-
-
-def owner_user(user_id):
-    """ Returns True if the user_id is in the allowed users database and owner == True
-
-    @param user_id: Google User ID
-    @return: Boolean True or False
-    """
-    if user_id:
-        user_check = mylatitude.datastore.Users.get_by_id(user_id)
-        if user_check:
-            if user_check.owner:
-                return True
-    return False
+import mylatitude.auth
 
 # Constants for milliseconds to units of time
 MILLIS_PER_12HOURS = 43200000
@@ -133,7 +75,7 @@ DATE_RESOURCE_CONTAINER = endpoints.ResourceContainer(
 
 # myLatitude API backend
 myLatAPI = endpoints.api(name='mylatitude', version='v1', description='Rest API to your location data',
-                         allowed_client_ids=ALLOWED_CLIENT_IDS)
+                         allowed_client_ids=mylatitude.auth.ALLOWED_CLIENT_IDS)
 
 
 @myLatAPI.api_class(resource_name='locations', path='locations')
@@ -258,8 +200,8 @@ class LocationsEndPoint(remote.Service):
 
     #noinspection PyUnusedLocal
     @endpoints.method(message_types.VoidMessage, SingleLocationMessage, name='latest', path='latest', http_method='GET',
-                      scopes=SCOPES)
-    @user_required(any_user)
+                      scopes=mylatitude.auth.SCOPES)
+    @mylatitude.auth.user_required(mylatitude.auth.any_user)
     def get_latest_location(self, not_used_request):
         """ Endpoint method which returns the latest location from the database
 
@@ -275,8 +217,9 @@ class LocationsEndPoint(remote.Service):
         return SingleLocationMessage(location=location)
 
     @endpoints.method(DATE_RESOURCE_CONTAINER, DateLocationsMessage,
-                      name='history', path='history/{year}/{month}/{day}', http_method='GET', scopes=SCOPES)
-    @user_required(owner_user)
+                      name='history', path='history/{year}/{month}/{day}',
+                      http_method='GET', scopes=mylatitude.auth.SCOPES)
+    @mylatitude.auth.user_required(mylatitude.auth.owner_user)
     def get_dates_locations(self, request):
         """ Endpoint method which returns the locations for a date supplied, along with timezone
 
