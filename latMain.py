@@ -16,7 +16,6 @@ from google.appengine.ext import deferred
 from google.appengine.api import mail
 from google.appengine.api import app_identity
 
-import jinja2
 import webapp2
 
 from google.appengine.ext.webapp import blobstore_handlers
@@ -24,10 +23,7 @@ import oauth2client.clientsecrets
 
 import mylatitude.datastore
 import mylatitude.auth
-
-JINJA_ENVIRONMENT = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.dirname(__file__)),
-    extensions=['jinja2.ext.autoescape'])
+from mylatitude import JINJA_ENVIRONMENT
 
 
 def random_key(n=15):
@@ -40,7 +36,7 @@ def random_key(n=15):
 
 
 # def signIn(user,output,forward_url='/'):
-#   template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+#   template = JINJA_ENVIRONMENT.get_template('default.html')
 #   greeting = ('<a href="%s">Please Sign in</a>.' % users.create_login_url(forward_url))
 #   template_values = {'content':greeting}
 #   output.write(template.render(template_values))
@@ -103,7 +99,7 @@ class SignOut(webapp2.RequestHandler):
             sign_out_url = users.create_logout_url('/signout')
             return self.redirect(sign_out_url)
         else:
-            template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+            template = JINJA_ENVIRONMENT.get_template('default.html')
             content = 'You are no longer signed in'
             template_values = {'content': content, 'header': 'Signed Out'}
             self.response.write(template.render(template_values))
@@ -124,7 +120,7 @@ class MainPage(webapp2.RequestHandler):
                 owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
             except IndexError:
                 greeting = 'Run /setup first'
-                template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+                template = JINJA_ENVIRONMENT.get_template('default.html')
                 template_values = {'content': greeting}
                 self.response.write(template.render(template_values))
                 return
@@ -152,7 +148,7 @@ class MainPage(webapp2.RequestHandler):
             client_obj = oauth2client.clientsecrets.loadfile(
                 os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
             api_root = "%s/_ah/api" % self.request.host_url
-            template = JINJA_ENVIRONMENT.get_template('/templates/index.html')
+            template = JINJA_ENVIRONMENT.get_template('index.html')
             template_values = {'locations': location_array, 'userName': owner.name, 'key': str(gkey.keyid),
                                'owner': mylatitude.datastore.Users.get_by_id(user['id']).owner,
                                'ownerPic': owner.picture,
@@ -176,7 +172,7 @@ class SetupOwner(webapp2.RequestHandler):
         if number_of_users > 0:
             template_values = {'content': 'This app already has an owning user, nothing to do here',
                                'header': 'Already setup'}
-            template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+            template = JINJA_ENVIRONMENT.get_template('default.html')
             self.response.write(template.render(template_values))
             return
         user = mylatitude.auth.service.userinfo().get().execute(http=http)
@@ -191,7 +187,7 @@ class SetupOwner(webapp2.RequestHandler):
             new_setup_key.keyid = new_random_key
             new_setup_key.put()
             template_values = {'userName': user['given_name'], 'key': new_random_key}
-            template = JINJA_ENVIRONMENT.get_template('/templates/userSetup.html')
+            template = JINJA_ENVIRONMENT.get_template('userSetup.html')
             self.response.write(template.render(template_values))
         else:
             mylatitude.auth.no_access(user, self.response, "/setup")
@@ -209,7 +205,7 @@ class SetupOwner(webapp2.RequestHandler):
         if number_of_users > 0:
             template_values = {'content': 'This app already has an owning user, nothing to do here',
                                'header': 'Already setup'}
-            template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+            template = JINJA_ENVIRONMENT.get_template('default.html')
             self.response.write(template.render(template_values))
             return
         http = mylatitude.auth.decorator.http()
@@ -221,7 +217,7 @@ class SetupOwner(webapp2.RequestHandler):
             except KeyError:
                 content = 'Map Key or User Name not set'
                 template_values = {'content': content, 'header': 'Setup Error'}
-                template = JINJA_ENVIRONMENT.get_template('/templates/default.html')
+                template = JINJA_ENVIRONMENT.get_template('default.html')
                 self.response.write(template.render(template_values))
                 return
             admin_user = mylatitude.datastore.Users(id=user['id'])
@@ -244,7 +240,7 @@ class SetupOwner(webapp2.RequestHandler):
             content = ('All setup, %s you have access!' % user_name)
             content += '<br/> Your Backitude key is: %s' % key
             template_values = {'content': content, 'userName': user_name, 'header': 'Setup Complete'}
-            template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+            template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
             self.response.write(template.render(template_values))
         else:
             mylatitude.auth.no_access(user, self.response, "/setup")
@@ -265,7 +261,7 @@ class NewFriendUrl(webapp2.RequestHandler):
         url = "%s/addviewer/%s" % (self.request.host_url, key)
         content = 'Send your friend this url:<br/><br/> %s' % url
         template_values = {'content': content, 'header': 'New Friend URL', 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         self.response.write(template.render(template_values))
 
 
@@ -282,7 +278,7 @@ class ViewURLs(webapp2.RequestHandler):
         for url in current_urls:
             content += "<br/>%s/addviewer/%s <br/>" % (self.request.host_url, url.keyid)
         template_values = {'content': content, 'header': 'Friend URLs', 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         self.response.write(template.render(template_values))
 
 
@@ -328,7 +324,7 @@ class ViewHistory(webapp2.RequestHandler):
         api_root = "%s/_ah/api" % self.request.host_url
         template_values = {'userName': user_data.name, 'clientID': client_obj[1]['client_id'],
                            'apiRoot': api_root}
-        template = JINJA_ENVIRONMENT.get_template('/templates/history.html')
+        template = JINJA_ENVIRONMENT.get_template('history.html')
         self.response.write(template.render(template_values))
 
 
@@ -341,7 +337,7 @@ class ViewAdmin(webapp2.RequestHandler):
     @mylatitude.auth.check_owner_user_dec('/admin')
     def get(self, user_data):
         template_values = {'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/admin.html')
+        template = JINJA_ENVIRONMENT.get_template('admin.html')
         self.response.write(template.render(template_values))
 
 
@@ -359,13 +355,13 @@ class ViewKey(webapp2.RequestHandler):
         except IndexError:
             content = 'You have no backitude error (Please create a new key)'
             template_values = {'content': content, 'userName': user_data.name, 'header': 'Missing Key'}
-            template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+            template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
             self.response.write(template.render(template_values))
             return
         content = '%s' % key
         header = 'Your key is:'
         template_values = {'content': content, 'header': header, 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         self.response.write(template.render(template_values))
 
 
@@ -388,7 +384,7 @@ class NewKey(webapp2.RequestHandler):
         content = '%s' % new_random_key
         header = 'Your new key is:'
         template_values = {'content': content, 'header': header, 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         self.response.write(template.render(template_values))
 
 
@@ -609,7 +605,7 @@ class ExportLocations(webapp2.RequestHandler):
         content = 'Task started, you will be emailed with an an attachment when finished'
         header = 'Export task started'
         template_values = {'content': content, 'header': header, 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+        template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
         deferred.defer(export_locations_task, user_data.auth, self.request.POST['format'])
         self.response.write(template.render(template_values))
 
@@ -653,7 +649,7 @@ class ImportExport(webapp2.RequestHandler):
     def get(self, user_data):
         upload_url = blobstore.create_upload_url('/importlocations')
         template_values = {'url': upload_url, 'userName': user_data.name}
-        template = JINJA_ENVIRONMENT.get_template('/templates/import_export.html')
+        template = JINJA_ENVIRONMENT.get_template('import_export.html')
         self.response.write(template.render(template_values))
 
 
@@ -764,14 +760,14 @@ class ImportLocation(blobstore_handlers.BlobstoreUploadHandler):
             content = 'File uploaded, you will be sent an email when processing is finish'
             header = 'File uploaded'
             template_values = {'content': content, 'header': header, 'userName': user_data.name}
-            template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+            template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
             deferred.defer(import_locations_task, user_data.auth, upload.key())
             self.response.write(template.render(template_values))
         except:
             content = 'Error uploading location File'
             header = 'Error'
             template_values = {'content': content, 'header': header, 'userName': user_data.name}
-            template = JINJA_ENVIRONMENT.get_template('/templates/defaultadmin.html')
+            template = JINJA_ENVIRONMENT.get_template('defaultadmin.html')
             self.response.write(template.render(template_values))
 
 

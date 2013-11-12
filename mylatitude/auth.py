@@ -19,31 +19,40 @@ import oauth2client.clientsecrets
 import oauth2client.appengine
 import apiclient.discovery
 import endpoints
-import jinja2
 
 import mylatitude.datastore
+from mylatitude import ROOT_DIR
+from mylatitude import JINJA_ENVIRONMENT
+
+
+class ClientSecretsError(Exception):
+    """
+    Exception Class for not being able to read the client_secrets.json file
+    """
+    def __init__(self, file_loc):
+        self.file_loc = file_loc
+        self.message = "Client secret file not found at {file_loc}".format(file_loc=file_loc)
+
+    def __str__(self):
+        return repr(self.message)
 
 ALLOWED_CLIENT_IDS = None
 
-try:
-    __clientObj__ = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), os.pardir,
-                                                                     'client_secrets.json'))
-    ALLOWED_CLIENT_IDS = [__clientObj__[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
+__client_secrets_loc__ = os.path.join(ROOT_DIR, 'client_secrets.json')
 
+try:
+    __clientObj__ = oauth2client.clientsecrets.loadfile(__client_secrets_loc__)
+    ALLOWED_CLIENT_IDS = [__clientObj__[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
 except oauth2client.clientsecrets.InvalidClientSecretsError:
-    logging.error("Client secret file not found at {}".format(
-        os.path.join(os.path.dirname(__file__), '../client_secrets.json')))
+    logging.error("Client secret file not found at {}".format(__client_secrets_loc__))
+    raise ClientSecretsError(__client_secrets_loc__)
 
 SCOPES = ['https://www.googleapis.com/auth/userinfo.profile', 'https://www.googleapis.com/auth/userinfo.email']
 
 decorator = oauth2client.appengine.OAuth2DecoratorFromClientSecrets(
-    os.path.join(os.path.dirname(__file__), '../client_secrets.json'), SCOPES)
+    os.path.join(ROOT_DIR, 'client_secrets.json'), SCOPES)
 
 service = apiclient.discovery.build("oauth2", "v2")
-
-__JINJA_ENVIRONMENT__ = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(os.path.join(os.path.dirname(__file__), os.pardir)),
-    extensions=['jinja2.ext.autoescape'])
 
 
 def user_required(user_test_function):
