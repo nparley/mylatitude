@@ -6,72 +6,18 @@ import json
 logging.getLogger().setLevel(logging.DEBUG)
 
 import endpoints
-from protorpc import messages
 from protorpc import message_types
 from protorpc import remote
 from google.appengine.api import urlfetch
 
 import mylatitude.datastore
 import mylatitude.auth
+import mylatitude.messages
 
 # Constants for milliseconds to units of time
 MILLIS_PER_12HOURS = 43200000
 MILLIS_PER_24HOURS = 86400000
 
-
-class UserMessage(messages.Message):
-    """ API message for user data """
-    userid = messages.StringField(1)
-    owner = messages.BooleanField(2)
-    name = messages.StringField(3)
-    picture = messages.StringField(4)
-
-
-class LocationMessage(messages.Message):
-    """ API message for location data """
-    timestampMs = messages.IntegerField(1, variant=messages.Variant.INT64)
-    latitude = messages.FloatField(2)
-    longitude = messages.FloatField(3)
-    accuracy = messages.IntegerField(4, variant=messages.Variant.INT32)
-    velocity = messages.IntegerField(5, variant=messages.Variant.INT32)
-    heading = messages.IntegerField(6, variant=messages.Variant.INT32)
-    altitude = messages.IntegerField(7, variant=messages.Variant.INT32)
-    verticalAccuracy = messages.IntegerField(8, variant=messages.Variant.INT32)
-
-
-class TimeZoneMessage(messages.Message):
-    """ API message for Timezone data """
-    dstOffset = messages.IntegerField(1, variant=messages.Variant.INT32)
-    rawOffset = messages.IntegerField(2, variant=messages.Variant.INT32)
-    timeZoneId = messages.StringField(3)
-    timeZoneName = messages.StringField(4)
-
-
-class DateMessage(messages.Message):
-    """ API message for a date with year, month, day as ints """
-    year = messages.IntegerField(1, variant=messages.Variant.INT32)
-    month = messages.IntegerField(2, variant=messages.Variant.INT32)
-    day = messages.IntegerField(3, variant=messages.Variant.INT32)
-
-
-class SingleLocationMessage(messages.Message):
-    """ Message with a single location """
-    location = messages.MessageField(LocationMessage, 1, repeated=False)
-
-
-class DateLocationsMessage(messages.Message):
-    """ Message with many locations, timezone and day data and number of locations variable """
-    locations = messages.MessageField(LocationMessage, 1, repeated=True)
-    timeZone = messages.MessageField(TimeZoneMessage, 2, repeated=False)
-    date = messages.MessageField(DateMessage, 3, repeated=False)
-    totalLocations = messages.IntegerField(4, variant=messages.Variant.INT32)
-
-# Resource to hold the GET request information to the history endpoint
-DATE_RESOURCE_CONTAINER = endpoints.ResourceContainer(
-    message_types.VoidMessage,
-    year=messages.IntegerField(2, variant=messages.Variant.INT32, required=True),
-    month=messages.IntegerField(3, variant=messages.Variant.INT32, required=True),
-    day=messages.IntegerField(4, variant=messages.Variant.INT32, required=True))
 
 # myLatitude API backend
 myLatAPI = endpoints.api(name='mylatitude', version='v1', description='Rest API to your location data',
@@ -90,14 +36,14 @@ class LocationsEndPoint(remote.Service):
         @param location_obj: ndb Location Class object
         @return: LocationMessage Class object
         """
-        return LocationMessage(timestampMs=location_obj.timestampMs,
-                               latitude=location_obj.latitudeE7 / 1E7,
-                               longitude=location_obj.longitudeE7 / 1E7,
-                               accuracy=location_obj.accuracy,
-                               velocity=location_obj.velocity,
-                               heading=location_obj.heading,
-                               altitude=location_obj.altitude,
-                               verticalAccuracy=location_obj.verticalAccuracy)
+        return mylatitude.messages.LocationMessage(timestampMs=location_obj.timestampMs,
+                                                   latitude=location_obj.latitudeE7 / 1E7,
+                                                   longitude=location_obj.longitudeE7 / 1E7,
+                                                   accuracy=location_obj.accuracy,
+                                                   velocity=location_obj.velocity,
+                                                   heading=location_obj.heading,
+                                                   altitude=location_obj.altitude,
+                                                   verticalAccuracy=location_obj.verticalAccuracy)
 
     @staticmethod
     def create_date_message(year, month, day):
@@ -109,7 +55,7 @@ class LocationsEndPoint(remote.Service):
         @param day: day as an int (23)
         @return: DateMessage Class object
         """
-        return DateMessage(year=year, month=month, day=day)
+        return mylatitude.messages.DateMessage(year=year, month=month, day=day)
 
     @staticmethod
     def create_timezone_message(tz_obj):
@@ -119,8 +65,9 @@ class LocationsEndPoint(remote.Service):
         @param tz_obj: ndb TimeZones Class object
         @return: TimeZoneMessage Class object
         """
-        return TimeZoneMessage(dstOffset=tz_obj.dstOffset, rawOffset=tz_obj.rawOffset,
-                               timeZoneId=tz_obj.timeZoneId, timeZoneName=tz_obj.timeZoneName)
+        return mylatitude.messages.TimeZoneMessage(
+            dstOffset=tz_obj.dstOffset, rawOffset=tz_obj.rawOffset,
+            timeZoneId=tz_obj.timeZoneId, timeZoneName=tz_obj.timeZoneName)
 
     #noinspection PyPep8Naming
     @staticmethod
@@ -199,7 +146,8 @@ class LocationsEndPoint(remote.Service):
             return new_timezone_obj
 
     #noinspection PyUnusedLocal
-    @endpoints.method(message_types.VoidMessage, SingleLocationMessage, name='latest', path='latest', http_method='GET',
+    @endpoints.method(message_types.VoidMessage, mylatitude.messages.SingleLocationMessage,
+                      name='latest', path='latest', http_method='GET',
                       scopes=mylatitude.auth.SCOPES)
     @mylatitude.auth.user_required(mylatitude.auth.any_user)
     def get_latest_location(self, not_used_request):
@@ -214,9 +162,9 @@ class LocationsEndPoint(remote.Service):
         location = self.create_location_message(last_location[0])
         if not last_location:
             raise endpoints.NotFoundException('No locations in database')
-        return SingleLocationMessage(location=location)
+        return mylatitude.messages.SingleLocationMessage(location=location)
 
-    @endpoints.method(DATE_RESOURCE_CONTAINER, DateLocationsMessage,
+    @endpoints.method(mylatitude.messages.DATE_RESOURCE_CONTAINER, mylatitude.messages.DateLocationsMessage,
                       name='history', path='history/{year}/{month}/{day}',
                       http_method='GET', scopes=mylatitude.auth.SCOPES)
     @mylatitude.auth.user_required(mylatitude.auth.owner_user)
@@ -255,8 +203,9 @@ class LocationsEndPoint(remote.Service):
 
         locations_message = [self.create_location_message(loc) for loc in location_entries]
         total_locations = len(locations_message)
-        return DateLocationsMessage(locations=locations_message, date=day_message,
-                                    timeZone=tz_message, totalLocations=total_locations)
+        return mylatitude.messages.DateLocationsMessage(
+            locations=locations_message, date=day_message,
+            timeZone=tz_message, totalLocations=total_locations)
 
 
 application = endpoints.api_server([myLatAPI], restricted=False)
