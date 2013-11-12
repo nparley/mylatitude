@@ -39,7 +39,6 @@ import jinja2
 
 __author__ = 'Neil Parley'
 __version__ = '0.2'
-__all__ = ["datastore"]
 
 ROOT_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
 TEMPLATE_DIR = os.path.join(ROOT_DIR, "templates")
