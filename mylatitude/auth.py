@@ -37,12 +37,15 @@ class ClientSecretsError(Exception):
         return repr(self.message)
 
 ALLOWED_CLIENT_IDS = None
+CLIENT_ID = None
 
 __client_secrets_loc__ = os.path.join(ROOT_DIR, 'client_secrets.json')
 
 try:
     __clientObj__ = oauth2client.clientsecrets.loadfile(__client_secrets_loc__)
-    ALLOWED_CLIENT_IDS = [__clientObj__[1]['client_id'], endpoints.API_EXPLORER_CLIENT_ID]
+    CLIENT_ID = __clientObj__[1]['client_id']
+    ALLOWED_CLIENT_IDS = [CLIENT_ID, endpoints.API_EXPLORER_CLIENT_ID]
+
 except oauth2client.clientsecrets.InvalidClientSecretsError:
     logging.error("Client secret file not found at {}".format(__client_secrets_loc__))
     raise ClientSecretsError(__client_secrets_loc__)

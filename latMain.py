@@ -19,7 +19,6 @@ from google.appengine.api import app_identity
 import webapp2
 
 from google.appengine.ext.webapp import blobstore_handlers
-import oauth2client.clientsecrets
 
 import mylatitude.datastore
 import mylatitude.auth
@@ -145,15 +144,13 @@ class MainPage(webapp2.RequestHandler):
                 location_array.append(
                     {'latitude': 55.948346, 'longitude': -3.198119, 'accuracy': 0, 'timeStampMs': str(0)})
 
-            client_obj = oauth2client.clientsecrets.loadfile(
-                os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
             api_root = "%s/_ah/api" % self.request.host_url
             template = JINJA_ENVIRONMENT.get_template('index.html')
             template_values = {'locations': location_array, 'userName': owner.name, 'key': str(gkey.keyid),
                                'owner': mylatitude.datastore.Users.get_by_id(user['id']).owner,
                                'ownerPic': owner.picture,
                                'apiRoot': api_root,
-                               'clientID': client_obj[1]['client_id']}
+                               'clientID': mylatitude.auth.CLIENT_ID}
             self.response.write(template.render(template_values))
 
 
@@ -320,9 +317,8 @@ class ViewHistory(webapp2.RequestHandler):
     @mylatitude.auth.decorator.oauth_required
     @mylatitude.auth.check_owner_user_dec('/history')
     def get(self, user_data):
-        client_obj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
         api_root = "%s/_ah/api" % self.request.host_url
-        template_values = {'userName': user_data.name, 'clientID': client_obj[1]['client_id'],
+        template_values = {'userName': user_data.name, 'clientID': mylatitude.auth.CLIENT_ID,
                            'apiRoot': api_root}
         template = JINJA_ENVIRONMENT.get_template('history.html')
         self.response.write(template.render(template_values))
