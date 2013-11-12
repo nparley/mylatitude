@@ -26,6 +26,8 @@ This module contains the python code which creates the app. The sub modules
 are:
 
 * mylatitude.datastore -- Holds the datastore classes for the project
+* mylatitude.auth      -- Holds the user authentication
+
 """
 __author__ = 'Neil Parley'
 __version__ = '0.2'
