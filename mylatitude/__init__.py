@@ -30,8 +30,10 @@ JINJA_ENVIRONMENT   -- Jinja environment for creating html from templates
 This module contains the python code which creates the app. The sub modules
 are:
 
-* mylatitude.datastore -- Holds the datastore classes for the project
 * mylatitude.auth      -- Holds the user authentication
+* mylatitude.datastore -- Holds the datastore classes for the project
+* mylatitude.messages  -- Holds the protorpc message classes for the backend API
+
 
 """
 import os
