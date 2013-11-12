@@ -22,6 +22,11 @@
 """
 myLatitude python Google App Engine Code
 
+ROOT_DIR            -- Root directory of the app (calculated as parent
+                       directory of the mylatitude module)
+TEMPLATE_DIR        -- Directory where the jinga templates are located
+JINJA_ENVIRONMENT   -- Jinja environment for creating html from templates
+
 This module contains the python code which creates the app. The sub modules
 are:
 
@@ -29,6 +34,15 @@ are:
 * mylatitude.auth      -- Holds the user authentication
 
 """
+import os
+import jinja2
+
 __author__ = 'Neil Parley'
 __version__ = '0.2'
 __all__ = ["datastore"]
+
+ROOT_DIR = os.path.join(os.path.dirname(__file__), os.pardir)
+TEMPLATE_DIR = os.path.join(ROOT_DIR, "templates")
+JINJA_ENVIRONMENT = jinja2.Environment(
+    loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
+    extensions=['jinja2.ext.autoescape'])
