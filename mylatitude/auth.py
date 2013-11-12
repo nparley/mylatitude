@@ -117,9 +117,9 @@ def no_access(user, output, forward_url='/'):
     @param forward_url: url to send user to after logout
     @return: None
     """
-    template = __JINJA_ENVIRONMENT__.get_template('/templates/default.html')
-    content = ('Sorry, %s you do not have access to this app! (<a href="%s">sign out</a>)' %
-               (user['name'], users.create_logout_url(forward_url)))
+    template = JINJA_ENVIRONMENT.get_template('default.html')
+    content = 'Sorry, {user_name} you do not have access to this app! (<a href="{logout_url}">sign out</a>)'.format(
+        user_name=user['name'], logout_url=users.create_logout_url(forward_url))
     template_values = {'content': content, 'header': 'No Access'}
     output.write(template.render(template_values))
 
