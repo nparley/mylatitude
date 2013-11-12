@@ -76,8 +76,8 @@ def _get_user_id_from_id_token(jwt):
     if len(segments) != 3:
         return
 
-    json_body = users_id_token._urlsafe_b64decode(segments[1])
     try:
+        json_body = users_id_token._urlsafe_b64decode(segments[1])
         parsed = json.loads(json_body)
         return parsed.get('sub')
     except:
