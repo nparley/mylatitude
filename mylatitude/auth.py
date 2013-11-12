@@ -25,16 +25,7 @@ from mylatitude import ROOT_DIR
 from mylatitude import JINJA_ENVIRONMENT
 
 
-class ClientSecretsError(Exception):
-    """
-    Exception Class for not being able to read the client_secrets.json file
-    """
-    def __init__(self, file_loc):
-        self.file_loc = file_loc
-        self.message = "Client secret file not found at {file_loc}".format(file_loc=file_loc)
 
-    def __str__(self):
-        return repr(self.message)
 
 ALLOWED_CLIENT_IDS = None
 
