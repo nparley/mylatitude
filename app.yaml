@@ -18,6 +18,12 @@ handlers:
   static_dir: js
 - url: /_ah/spi/.*
   script: backend.application
+- url: /tasks/.*
+  script: mylatitude.tasks.application
+  secure: always
+- url: /admin/.*
+  script: mylatitude.admin.application
+  secure: always
 - url: /.*
   script: latMain.application
   secure: always 

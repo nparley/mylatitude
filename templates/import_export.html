@@ -44,7 +44,7 @@
             Start a task to get emailed a zip file of your location data. Each location in your database will cause one read
             so for large databases consider using bulkloader if you are on the free account. (TODO: Add to and form fields
             to define range for export.)<br/><br/>
-            <form action="/exportlocations" method="POST" enctype="multipart/form-data">
+            <form action="/tasks/exportlocations" method="POST" enctype="multipart/form-data">
             Output format (Google TakeOut JSON format or bulkloader CSV format):
             <select name="format">
               <option value="JSON">JSON</option>
