@@ -22,62 +22,14 @@ from google.appengine.ext.webapp import blobstore_handlers
 
 import mylatitude.datastore
 import mylatitude.auth
+import mylatitude.tools
 from mylatitude import JINJA_ENVIRONMENT
-
-
-def random_key(n=15):
-    """
-    Generate a random key
-    @rtype : str
-    @param n: int, length of string
-    """
-    return base64.urlsafe_b64encode(os.urandom(n))
-
 
 # def signIn(user,output,forward_url='/'):
 #   template = JINJA_ENVIRONMENT.get_template('default.html')
 #   greeting = ('<a href="%s">Please Sign in</a>.' % users.create_login_url(forward_url))
 #   template_values = {'content':greeting}
 #   output.write(template.render(template_values))
-
-
-def json_error(response, code, message):
-    """
-    Create a JSON error message
-
-    Generate a error message in JSON format for the API parts of the app.
-    @param response: webapp2 response object
-    @param code: int HTTP status code
-    @param message: String error message
-    @return: None
-    """
-    response.headers.add_header('Content-Type', 'application/json')
-    response.set_status(code)
-    result = {
-        'status': 'error',
-        'status_code': code,
-        'error_message': message,
-    }
-    response.write(json.dumps(result))
-
-
-def email_after_task(to_email, task_name, message, attachment=None):
-    """
-    Call to send an email from admin@app-name.appspot.com that a task has finished
-
-    @param to_email: String to email address, "example@example.com"
-    @param task_name: Name of the task that has finished
-    @param message: String message to send as the email body
-    @param attachment: Tuple of (attachmentFileName,attachmentData) or None for no attachment
-    @return: None
-    """
-    sender = "admin@%s.appspotmail.com" % app_identity.get_application_id()
-    if attachment:
-        mail.send_mail(sender=sender, to=to_email, subject="Task %s Finished" % task_name, body=message,
-                       attachments=[attachment])
-    else:
-        mail.send_mail(sender=sender, to=to_email, subject="Task %s Finished" % task_name, body=message)
-
 
 #class oauthTest(webapp2.RequestHandler):
 #  @mylatitude.auth.decorator.oauth_required
@@ -179,7 +131,7 @@ class SetupOwner(webapp2.RequestHandler):
                 current_setup_key.key.delete()
             except IndexError:
                 pass  # No setup key
-            new_random_key = random_key(15)
+            new_random_key = mylatitude.tools.random_key(15)
             new_setup_key = mylatitude.datastore.SetupFormKey(id=new_random_key)
             new_setup_key.keyid = new_random_key
             new_setup_key.put()
@@ -230,7 +182,7 @@ class SetupOwner(webapp2.RequestHandler):
             gmaps = mylatitude.datastore.Maps()
             gmaps.keyid = map_key
             gmaps.put()
-            key = random_key(15)
+            key = mylatitude.tools.random_key(15)
             new_key_obj = mylatitude.datastore.Keys(id=key)
             new_key_obj.keyid = key
             new_key_obj.put()
@@ -406,15 +358,15 @@ class InsertLocation(webapp2.RequestHandler):
         try:
             key = self.request.GET['key']
         except KeyError:
-            json_error(self.response, 401, "No Access")
+            mylatitude.tools.json_error(self.response, 401, "No Access")
             return
         if not mylatitude.datastore.Keys.get_by_id(key):
-            json_error(self.response, 401, "No Access")
+            mylatitude.tools.json_error(self.response, 401, "No Access")
             return
         post_body = json.loads(self.request.body)
         new_location = mylatitude.datastore.Location.get_by_id(post_body['timestampMs'])
         if new_location:
-            json_error(self.response, 200, "Time stamp error")
+            mylatitude.tools.json_error(self.response, 200, "Time stamp error")
             return
         try:
             new_location = mylatitude.datastore.Location(id=post_body['timestampMs'])
@@ -428,7 +380,7 @@ class InsertLocation(webapp2.RequestHandler):
             new_location.verticalAccuracy = int(post_body['verticalAccuracy'])
             new_location.put()
         except (KeyError, ValueError):
-            json_error(self.response, 400, "Unexpected error")
+            mylatitude.tools.json_error(self.response, 400, "Unexpected error")
             return
 
         response = {'data': new_location.to_dict()}
@@ -445,7 +397,7 @@ class InsertBack(webapp2.RequestHandler):
         try:
             key = self.request.POST['key']
             if not mylatitude.datastore.Keys.get_by_id(key):
-                json_error(self.response, 401, "No Access")
+                mylatitude.tools.json_error(self.response, 401, "No Access")
                 return
             latitude = int(float(self.request.POST['latitude']) * 1E7)
             longitude = int(float(self.request.POST['longitude']) * 1E7)
@@ -485,7 +437,7 @@ class InsertBack(webapp2.RequestHandler):
         except KeyError, e:
             logging.debug('Missing values %s' % str(e))
             logging.debug(self.request)
-            json_error(self.response, 400, "Missing values %s" % str(e))
+            mylatitude.tools.json_error(self.response, 400, "Missing values %s" % str(e))
             return
 
         # Only add the location to the database if the timestamp is unique
@@ -493,7 +445,7 @@ class InsertBack(webapp2.RequestHandler):
         # keep trying
         new_location = mylatitude.datastore.Location.get_by_id(id=str(timestamp))
         if new_location:
-            json_error(self.response, 200, "Time stamp error")
+            mylatitude.tools.json_error(self.response, 200, "Time stamp error")
             return
             #noinspection PyBroadException
         try:
@@ -510,7 +462,7 @@ class InsertBack(webapp2.RequestHandler):
         except ValueError:
             logging.debug('DB insert error')
             logging.debug(self.request)
-            json_error(self.response, 400, "DB insert error")
+            mylatitude.tools.json_error(self.response, 400, "DB insert error")
             return
 
         response = {'data': new_location.to_dict()}
