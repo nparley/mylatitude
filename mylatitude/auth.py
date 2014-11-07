@@ -127,6 +127,18 @@ def no_access(user, output, forward_url='/'):
     output.write(template.render(template_values))
 
 
+def no_users(output):
+    """
+    Call if there are no users in the datastore to remind the user that they have to run setup
+    :param output: webapp2 response object
+    :return: None
+    """
+    template = JINJA_ENVIRONMENT.get_template('default.html')
+    greeting = 'Run /setup first to setup user as owner of the app'
+    template_values = {'content': greeting}
+    output.write(template.render(template_values))
+
+
 def check_owner_user_dec(forward_url='/'):
     """
     Decorator for the checkOwnerUser returns f() if user is the owner if not writes out no access
@@ -170,6 +182,11 @@ def check_user(user, output, allow_access=False, forward_url='/'):
             return True
         else:
             if not allow_access:
+                try:
+                    owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
+                except IndexError:
+                    no_users(output)
+                    return False
                 no_access(user, output, forward_url)
                 return False
             else:

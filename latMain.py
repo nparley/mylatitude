@@ -54,15 +54,7 @@ class MainPage(webapp2.RequestHandler):
         http = mylatitude.auth.decorator.http()
         user = mylatitude.auth.service.userinfo().get().execute(http=http)
         if mylatitude.auth.check_user(user, self.response):
-            #noinspection PyBroadException
-            try:
-                owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
-            except IndexError:
-                greeting = 'Run /setup first'
-                template = JINJA_ENVIRONMENT.get_template('default.html')
-                template_values = {'content': greeting}
-                self.response.write(template.render(template_values))
-                return
+            owner = mylatitude.datastore.Users.query(mylatitude.datastore.Users.owner == True).fetch(1)[0]
             gkey = mylatitude.datastore.Maps.query().fetch(1)[0]
             locations = mylatitude.datastore.Location.query().order(-mylatitude.datastore.Location.timestampMs).fetch(2)
             location_array = []
