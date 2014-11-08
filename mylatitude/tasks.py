@@ -273,7 +273,7 @@ def import_locations_task(user_obj, blob_key):
     except:
         message = "Error reading uploading file, this file might not have been deleted"
         logging.error(message)
-        mylatitude.tools.email_after_task(user_obj['email'], "Import Location", message)
+        mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", message)
         return
         # Check we have a zip file
     try:
@@ -282,7 +282,7 @@ def import_locations_task(user_obj, blob_key):
         message = "Uploaded file is not a zip file"
         logging.error(message)
         blobstore.delete(blob_key)
-        mylatitude.tools.email_after_task(user_obj['email'], "Import Location", message)
+        mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", message)
         return
 
     location_file = None
@@ -302,7 +302,7 @@ def import_locations_task(user_obj, blob_key):
         message = "Zip File does not contain json or csv"
         logging.error(message)
         blobstore.delete(blob_key)
-        mylatitude.tools.email_after_task(user_obj['email'], "Import Location", message)
+        mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", message)
         return
     elif location_file_type == "CSV":  # CSV file found
         try:
@@ -310,7 +310,7 @@ def import_locations_task(user_obj, blob_key):
         except deferred.PermanentTaskFailure, e:
             logging.exception(e)
             blobstore.delete(blob_key)
-            mylatitude.tools.email_after_task(user_obj['email'], "Import Location", e)
+            mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", e)
             return
     elif location_file_type == "JSON":  # JSON file found
         try:
@@ -318,14 +318,14 @@ def import_locations_task(user_obj, blob_key):
         except deferred.PermanentTaskFailure, e:
             logging.exception(e)
             blobstore.delete(blob_key)
-            mylatitude.tools.email_after_task(user_obj['email'], "Import Location", e)
+            mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", e)
             return
     else:
         # Catch all if we have defined a new file type but not defined an import function
         message = "Undefined File type"
         logging.error(message)
         blobstore.delete(blob_key)
-        mylatitude.tools.email_after_task(user_obj['email'], "Import Location", message)
+        mylatitude.tools.email_after_task(user_obj['email'], "Import Location (Failed)", message)
         return
 
     message = "Finished import task and all seems ok\nImported %d new values and found %d existing values" % \
