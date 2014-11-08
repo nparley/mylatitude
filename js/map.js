@@ -18,6 +18,7 @@ function initialize() {
 
     function updateLocation(location,userName,userPic) {
         if (location.timeStampMs > 0) {
+            var useLocalFormat = 0; // use local time formatting am / pm for US for example
             var center = new google.maps.LatLng(location.latitude, location.longitude);
             infoWindow.close();
             //noinspection JSValidateTypes
@@ -61,7 +62,13 @@ function initialize() {
                 + location.longitude + "'> Directions Link</a><br/>";
             updateString += "Last updated on:<br/>" + d.toDateString() + "<br/>";
 
-            var atTime = d.toTimeString();
+            var atTime;
+            if (useLocalFormat){
+                atTime = d.toLocaleTimeString();
+            } else {
+                atTime = d.toTimeString();
+            }
+
             var atTimeArray = atTime.split("(");
             updateString += "at: " + atTimeArray[0] + "<br/>";
 
