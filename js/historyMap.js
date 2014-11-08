@@ -198,13 +198,23 @@ myLatitude.history = {};
  *   as getLocalTime.
  */
     this.locationInfo = function(location) {
+        var use24Hours = 0; // use 24 format, set to 0 for am / pm
         var infoText = "Latitude: " + location.latitude + "<br/>";
         infoText += "Longitude: " + location.longitude + "<br/>";
         infoText += "Accuracy: " + location.accuracy + "m<br/><br/>";
         var timestamp = parseInt(location.timestampMs) + this.timezone.dstOffset * 1000 + this.timezone.rawOffset * 1000;
         var d = new Date(timestamp);
-        infoText += "At: " + d.getUTCHours().pad() + ":" + d.getUTCMinutes().pad() +
-            ":" + d.getUTCSeconds().pad() + " local time<br/>";
+        if (use24Hours) {
+            infoText += "At: " + d.getUTCHours().pad() + ":" + d.getUTCMinutes().pad() +
+                ":" + d.getUTCSeconds().pad() + " local time<br/>";
+        } else {
+            var amPm = "AM";
+            if (d.getUTCHours() > 11) amPm = "PM";
+            var hour = d.getUTCHours();
+            if (hour != 12) hour %= 12;
+            infoText += "At: " + hour + ":" + d.getUTCMinutes().pad() +
+                ":" + d.getUTCSeconds().pad() + " " + amPm + " local time<br/>";
+        }
         infoText += this.timezone.timeZoneId +  "<br/>";
         infoText += this.timezone.timeZoneName +  "<br/>";
         return infoText;
@@ -365,7 +375,7 @@ function apiLoad(){
                     calendar.fadeOut("fast");
                     $(".historyCalMin").show()
                 },
-                onClick: (function (el, cell, date, data) {
+                onClick: (function (el, cell, date) {
                     el.val(date.toLocaleDateString());
                     myLatitude.history.currentDate = date;
                     myLatitude.history.updateDate();
