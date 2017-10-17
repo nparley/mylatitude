@@ -183,8 +183,9 @@ class ViewHistory(webapp2.RequestHandler):
     @mylatitude.auth.check_owner_user_dec('/history')
     def get(self, user_data):
         api_root = "%s/_ah/api" % self.request.host_url
+        gkey = mylatitude.datastore.Maps.query().fetch(1)[0]
         template_values = {'userName': user_data.name, 'clientID': mylatitude.auth.CLIENT_ID,
-                           'apiRoot': api_root}
+                           'apiRoot': api_root, 'key': str(gkey.keyid)}
         template = JINJA_ENVIRONMENT.get_template('history.html')
         self.response.write(template.render(template_values))
 
