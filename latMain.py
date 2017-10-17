@@ -494,8 +494,9 @@ class ViewHistory(webapp2.RequestHandler):
     def get(self, user_data):
         client_obj = oauth2client.clientsecrets.loadfile(os.path.join(os.path.dirname(__file__), 'client_secrets.json'))
         api_root = "%s/_ah/api" % self.request.host_url
+        gkey = Maps.query().fetch(1)[0]
         template_values = {'userName': user_data.name, 'clientID': client_obj[1]['client_id'],
-                           'apiRoot': api_root}
+                           'apiRoot': api_root, 'key': str(gkey.keyid)}
         template = JINJA_ENVIRONMENT.get_template('/templates/history.html')
         self.response.write(template.render(template_values))
 
