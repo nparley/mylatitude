@@ -3,6 +3,7 @@ import datetime
 import logging
 import calendar
 import json
+import urllib
 
 from functools import wraps
 
@@ -39,7 +40,7 @@ def user_required(user_test_function):
             if user_test_function(user_id):
                 return func(*args, **kwargs)
             else:
-                raise endpoints.UnauthorizedException('User does not have access to this endpoint')
+                raise endpoints.UnauthorizedException('User does not have access to this endpoint: %s' % user_id)
 
         return check_user_token
 
@@ -116,6 +117,8 @@ class SingleLocationMessage(messages.Message):
     """ Message with a single location """
     location = messages.MessageField(LocationMessage, 1, repeated=False)
 
+class TestResponse(messages.Message):
+    message = messages.StringField(1)
 
 class DateLocationsMessage(messages.Message):
     """ Message with many locations, timezone and day data and number of locations variable """
@@ -132,7 +135,7 @@ DATE_RESOURCE_CONTAINER = endpoints.ResourceContainer(
     day=messages.IntegerField(4, variant=messages.Variant.INT32, required=True))
 
 # myLatitude API backend
-myLatAPI = endpoints.api(name='mylatitude', version='v1', description='Rest API to your location data',
+myLatAPI = endpoints.api(name='mylatitude', version='v2', description='Rest API to your location data',
                          allowed_client_ids=ALLOWED_CLIENT_IDS)
 
 

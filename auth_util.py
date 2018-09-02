@@ -69,8 +69,8 @@ def _get_user_id_from_id_token(jwt):
       String containing the Google+ user ID or None if it can't be determined
         from the JWT.
     """
-    if endpoints.get_current_user() is None:
-        return
+    # if endpoints.get_current_user() is None:
+    #     return
 
     segments = jwt.split('.')
     if len(segments) != 3:
@@ -171,7 +171,7 @@ def _get_user_id_from_bearer_token(token):
     if urlfetch_result.status_code == 200:
         try:
             user_info = json.loads(urlfetch_result.content)
-            return user_info.get('user_id')
+            return user_info.get('sub')
         except:
             pass
 

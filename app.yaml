@@ -1,5 +1,5 @@
 application: neillatitude
-version: 1
+version: 2
 runtime: python27
 api_version: 1
 threadsafe: true
@@ -16,7 +16,7 @@ handlers:
   static_dir: images
 - url: /js
   static_dir: js
-- url: /_ah/spi/.*
+- url: /_ah/api/.*
   script: backend.application
 - url: /.*
   script: latMain.application
@@ -28,9 +28,9 @@ libraries:
 - name: jinja2
   version: 2.6
 - name: pycrypto
-  version: "2.6"
-- name: endpoints
-  version: "1.0"
+  version: 2.6
+- name: ssl
+  version: "latest"
 
 builtins:
 - remote_api: on

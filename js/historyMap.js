@@ -109,6 +109,7 @@ myLatitude.history = {};
  *   else show a no API access error
  */
     this.getData = function (){
+
         var year = myLatitude.history.currentDate.getFullYear();
         var month = myLatitude.history.currentDate.getMonth()+1;
         var day = myLatitude.history.currentDate.getDate();

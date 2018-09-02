@@ -30,12 +30,12 @@ myLatitude.endpoints = {};
         api_root = apiRoot;
         var apisToLoad;
         var callback = function () {
-            if (--apisToLoad == 0) {
+            if (--apisToLoad === 0) {
                 myLatitude.endpoints.signin(true, apiStartFunction);
             }
         };
         apisToLoad = 2;
-        gapi.client.load('mylatitude', 'v1', callback, api_root);
+        gapi.client.load('mylatitude', 'v2', callback, api_root);
         gapi.client.load('oauth2', 'v2', callback);
     };
 /**
@@ -56,7 +56,7 @@ myLatitude.endpoints = {};
             if (!resp.code) {
                 var token = gapi.auth.getToken();
                 gapi.client.mylatitude.locations.latest().execute(function (resp) {
-//                    console.log(resp);
+                   // console.log(resp);
                 });
             }
         });

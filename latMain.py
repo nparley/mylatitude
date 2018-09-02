@@ -21,7 +21,7 @@ from google.appengine.api import app_identity
 import jinja2
 import webapp2
 
-from oauth2client.appengine import OAuth2DecoratorFromClientSecrets
+from oauth2client.contrib.appengine import OAuth2DecoratorFromClientSecrets
 from google.appengine.ext.webapp import blobstore_handlers
 import oauth2client.clientsecrets
 
