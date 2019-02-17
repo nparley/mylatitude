@@ -232,29 +232,29 @@ class LocationsEndPoint(remote.Service):
             query_params = (after_midday_rec.latitudeE7 / 1E7, after_midday_rec.longitudeE7 / 1E7,
                             after_midday_rec.timestampMs / 1000)
 
-        timezone_api_url = \
-            "https://maps.googleapis.com/maps/api/timezone/json?location=%.2f,%.2f&timestamp=%d&sensor=false" \
-            % query_params
-
-        timezone_result = urlfetch.fetch(url=timezone_api_url, method=urlfetch.GET, validate_certificate=True)
-        if timezone_result.status_code == 200:
-            new_timezone_obj = TimeZones(id=str(day_ts_ms))
-            new_timezone_obj.day = day.date()
-            tz_json = json.loads(timezone_result.content)
-            new_timezone_obj.dstOffset = tz_json["dstOffset"]
-            new_timezone_obj.rawOffset = tz_json["rawOffset"]
-            new_timezone_obj.timeZoneId = tz_json["timeZoneId"]
-            new_timezone_obj.timeZoneName = tz_json["timeZoneName"]
-            new_timezone_obj.put()
-            return new_timezone_obj
-        else:
-            new_timezone_obj = TimeZones(id=str(day_ts_ms))
-            new_timezone_obj.day = day.date()
-            new_timezone_obj.dstOffset = 0
-            new_timezone_obj.rawOffset = 0
-            new_timezone_obj.timeZoneId = "UTC"
-            new_timezone_obj.timeZoneName = "Coordinated Universal Time"
-            return new_timezone_obj
+        # timezone_api_url = \
+        #     "https://maps.googleapis.com/maps/api/timezone/json?location=%.2f,%.2f&timestamp=%d&sensor=false" \
+        #     % query_params
+        #
+        # timezone_result = urlfetch.fetch(url=timezone_api_url, method=urlfetch.GET, validate_certificate=True)
+        # if timezone_result.status_code == 200:
+        #     new_timezone_obj = TimeZones(id=str(day_ts_ms))
+        #     new_timezone_obj.day = day.date()
+        #     tz_json = json.loads(timezone_result.content)
+        #     new_timezone_obj.dstOffset = tz_json["dstOffset"]
+        #     new_timezone_obj.rawOffset = tz_json["rawOffset"]
+        #     new_timezone_obj.timeZoneId = tz_json["timeZoneId"]
+        #     new_timezone_obj.timeZoneName = tz_json["timeZoneName"]
+        #     new_timezone_obj.put()
+        #     return new_timezone_obj
+        # else:
+        new_timezone_obj = TimeZones(id=str(day_ts_ms))
+        new_timezone_obj.day = day.date()
+        new_timezone_obj.dstOffset = 0
+        new_timezone_obj.rawOffset = 0
+        new_timezone_obj.timeZoneId = "UTC"
+        new_timezone_obj.timeZoneName = "Coordinated Universal Time"
+        return new_timezone_obj
 
     #noinspection PyUnusedLocal
     @endpoints.method(message_types.VoidMessage, SingleLocationMessage, name='latest', path='latest', http_method='GET',
